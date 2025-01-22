@@ -1,0 +1,13 @@
+name: pypontem
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12.1
+  - pandas=2.2.0
+  - jupyter=1.0.0
+  - pip:
+      - cookiecutter==2.5.0
+      - pytest==8.0.1
+      - xlwings
+      - Pint
+

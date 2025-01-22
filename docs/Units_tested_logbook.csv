@@ -1,0 +1,87 @@
+﻿Quantity,Compatible Units,How units are written in our script,Tested
+Pressure,"Atm, bar,bara,barg,kPa,MPa,Pa,psi,psia,psig,kgf/cm2.","atm,bar,bara,barg,kpa,mpa,pa,psi,psig,kgf_cm2",yes
+Liquid Flowrate,"bbl/d,bbl/h,bbl/min,ft3/d,ft3/h, ft3/min,ft3/s,m3/d,m3/h,m3/s, gpm,L/min,mL/min","bbl_d,bbl_h,bbl_min,ft3_d,ft3_h,ft3_min,ft3_s,m3_d,m3_h,m3_s,gpm,l_min,ml_min",Yes
+Dynamic Viscosity,"cp,kg/m-h,kg/m-s,mPa-s,N-s/m2,Pa-s,lb/ft-h ","cp,kg_mh,kg_ms,mpas,ns_m2,pas,lb_fth",yes
+Area,"cm2,ft2,in2,m2","cm2,ft2,in2,m2",yes
+Density,"g/cm3,kg/m3,lb/ft3,lb/in3","g_cm3,kg_m3,lb_ft3,lb_in3",yes
+Corrosion Rate,"m/s,m/yr,mm/yr,mpy ","m_s,m_y,mm_y,mpy",yes
+Gas Standard Flowrate,"MMscf/d,scf/d,scf/h,scf/s,sm3/d,sm3/h,sm3/s,Mscf/d,Msm3/d,Msm3/h","mmscf_d,scf_d,scf_h,scf_s,sm3_d,sm3_h,sm3_s,mscf_d,msm3_d,msm3_h",yes
+GOR,"MMscf/sbbl,scf/scf,scf/sbbl,sm3/sm3","mmscf_sbbl,scf_scf,scf_sbbl,sm3_sm3",yes
+Kinematic Viscosity,"cSt,ft2/h,in2/s,m2/s ","cst,ft2_h,in2_s,m2_s",yes
+Mass Flowrate,"g/s,kg/h,kg/s,kt/d,lb/h,lb/s,t/d","g_s,kg_h,kg_s,kt_d,lb_h,lb_s,t_d",yes
+Volume,"ft3,m3,gal,L,MMft3,bbl,cm3,mL","ft3,m3,gal,l,mmft3,bbl,cm3,ml",yes
+Thermal Conductivity,"btu/ft-h-R,cal/m-h-K,W/m-C,W/m-K ","btu_fthr,cal_mhk,w_mc,w_mk",yes
+Temperature,"°C,°F,K,°R","celsius or degC, fahrenheit or degF,rankine or degR,kelvin or degK", yes
+Temperature Difference,"dTC,dTF,dTK,dTR","dtc,dtf,dtk,dtr",yes
+Specific heat Capacity,"btu/lb-F,btu/lb-R,J/kg-C,J/kg-K,kJ/kg-C","btu_lbf,btu_lbr,j_kgc,j_kgk,kj_kgc",yes
+Energy,"btu,cal,J","btu,cal,j",yes
+Surface Tension,"dyn/cm ,mN/m,N/m","dyn_cm,mn_m,n_m",yes
+Molecular Weight,"kg/kmol,g/mol,kg/mol,lb/lbmol","kg_kmol,g_mol,kg_mol,lb_lbmol",yes
+Molar Volume,"cm3/mol,m3/mol,L/mol,ft3/lbmol","cm3_mol,m3_mol,l_mol,ft3_lbmol",yes
+Angular Velocity,"rad/sec,deg/sec","rad_s,deg_s",No
+Angle,"degree,rad","degree or deg,rad or radian",No
+Area Per Length,"in2/ft,m2/m,mm2/m ","in2_ft,m2_m,mm2_m",No
+Brine Density,"g/cm3,kg/m3,lb/ft3,lb/in3,ppg,mg/L","g_cm3,kg_m3,lb_ft3,lb_in3,ppg,mg_l",No
+Acceleration,"cm/s2,ft/s2,in/s2,m/s2","cm_s2,ft_s2,in_s2,m_s2",No
+CGR,"scf/scf,sm3/sm3,sm3/MMsm3,sbbl/MMscf,sbbl/scf","scf_scf,sm3_sm3,sm3_mmsm3,sbbl_mmscf,sbbl_scf",No
+Density Per Pressure,"kg/m-N,s2/m2 ","kg_mn,s2_m2",No
+Density Per Temperature,"kg/m3-C,kg/m3-K","kg_m3c,kg_m3k",No
+Diffusion Coefficient,"cm2/s,m2/s,mm2/s","cm2_s,m2_s,mm2_s",No
+Distance,"cm,ft,in,km,m,mi,mm,yd","cm,ft,in,km,m,mi,mm,yd",No
+Enthalpy,"btu,cal,J","btu,cal,j",No
+Enthalpy Per Mass,"btu/lb,J/kg,kJ/kg","btu_lb,j_kg,kj_kg",No
+Enthalpy Per Mol,"btu/lbmol,cal/mol,J/mol","btu_lbmol,cal_mol,j_mol",No
+Enthalpy Per Volume,"btu/ft3,cal/m3,J/m3","btu_ft3,cal_m3,j_m3",No
+Enthalpy per mole per Temperature,"btu/lbmol-R,J/mol-K","btu_lbmolr,j_molk",No
+Entropy,"btu/R,cal/K,J/K","btu_r,cal_k,j_k",No
+Entropy Per Mass,"btu/lb-F,J/kg-C ,kJ/kg-C","btu_lbf,j_kgc,kj_kgc",No
+Entropy Per Mol,"btu/lbmol-R,cal/mol-K,J/mol-K","btu_lbmolr,cal_molk,j_molk",No
+Entropy Per Volume,"btu/ft3-R,cal/m3-K,J/m3-K","btu_ft3r,cal_m3k,j_m3k",No
+Erosion Rate,"in/yr,mm/yr,in/kyr","in_y,mm_y,in_kyr",No
+Force,"dyn,kgf ,N,lbf","dyn or dyne,kgf,newton,lbf",No
+Fraction,"ppm,ppb","ppm,ppb",No
+Frequency,"Hz,1/h,1/min,1/s","hz,one_h,one_m,one_s",No
+Friction Factor ,"N-s/m,g/s,kg/h,kg/s,kt/d,lb/h,lb/s,t/d","ns_m,g_s,kg_h,kg_s,kt_d,lb_h,lb_s,t_d",No
+Gas Flowrate,"bbl/d,bbl/h,bbl/min,ft3/d,ft3/h,ft3/min,ft3/s,m3/d,m3/h,m3/s,gpm,L/min,mL/min","bbl_d,bbl_h,bbl_min,ft3_d,ft3_h,ft3_min,ft3_s,m3_d,m3_h,m3_s,gpm,l_min,ml_min",No
+GLR,"MMscf/sbbl,scf/scf,scf/sbbl,sm3/sm3","mmscf_sbbl,scf_scf,scf_sbbl,sm3_sm3",No
+Heat Flux,"btu/ft2-s,btu/in2-s,kW/m2,W/cm2,W/m2","btu_ft2s,btu_in2s,kw_m2,w_cm2,w_m2",No
+Heat Transfer Coefficient,"btu/ft2-h-F,cal/m2-h-C,W/m2-C,W/m2-K","btu_ft2hf,cal_m2hc,w_m2c,w_m2k",No
+Heat Transfer Per Length,"btu/s-ft,kW/m,W/m","btu_sft,kw_m,w_m",No
+Length,"cm,ft,in,km,m,mi,mm,yd","cm,ft,in,km,m,mi,mm,yd",No
+Linear Momentum,"kg-m/s,N-s","kgm_s,ns",No
+Liquid Standard Flowrate,"sm3/d,sm3/h,sm3/s,sbbl/d,sbbl/h,sbbl/min","sm3_d,sm3_h,sm3_s,sbbl_d,sbbl_h,sbbl_min",No
+Mass  ,"g,kg,mg,kt,kips,oz,lb,t ","g,kg,mg,kt,kips,oz,lb,t ",No
+Mass Flowrate Per Area,"kg/h-m2,kg/h-cm2,kg/s-m2,lb/h-m2,lb/s-m2,mg/h-in2","kg_hm2,kg_hcm2,kg_sm2,lb_hm2,lb_sm2,mg_hin2",No
+Mass Gradient,"g/cm,g/ft,g/in,g/m,kg/m,lb/ft,lb/in","g_cm,g_ft,g_in,g_m,kg_m,lb_ft,lb_in",No
+Mass Moment Of Inertia,"kg-m2,lb-ft2,lbf-in-s2,lb-in2","kgm2,lbft2,lbfins2,lbin2",No
+Mass Per Area,"g/cm2,g/ft2,g/in2,g/m2,kg/ft2,kg/m2","g_cm2,g_ft2,g_in2,g_m2,kg_ft2,kg_m2",No
+Molar Concentration Gradient,"mol/cm4,mol/m4,lbmol/ft4","mol_cm4,mol_m4,lbmol_ft4",No
+Molar Density,"mol/cm3,mol/m3,mol/L,lbmol/ft3","mol_cm3,mol_m3,mol_l,lbmol_ft3",No
+Molar Flux,"kmol/m2-s,mol/m2-s","kmol_m2s,mol_m2s",No
+Molar Rate,"kmol/s,mol/s,lbmol/s","kmol_s,mol_s,lbmol_s",No
+Mole Density Per Temperature,mol/m3-K,mol_m3k,No
+Moles,"kmol,mol,lbmol","kmol,mol,lbmol",No
+One Over Flowrate,"d/bbl,min/bbl,d/ft3,h/ft3,s/ft3,d/m3,h/m3,s/m3","d_bbl,min_bbl,d_ft3,h_ft3,s_ft3,d_m3,h_m3,s_m3",No
+One Over Lenghth,"1/cm,1/ft,1/km,1/m,1/mi,1/mm","one_cm,one_ft,one_km,one_m,one_mi,one_mm",No
+One Over Standard Flowrate,"d/MMscf,d/MMsm3,s/MMscf,d/scf,s/scf,d/sm3,s/sm3","d_mmscf,d_mmsm3,s_mmscf,d_scf,s_scf,d_sm3,s_sm3",No
+Power,"btu/h,hp,kW,mW,W","btu_h,hp,kw,mw,w",No
+Pressure Difference,"atm,bar,kPa,Pa,psi","atm,bar,kpa,pa,psi",No
+Pressure Gradient,"psi/ft,kPa/m,Pa/m,bar/m","psi_ft,kpa_m,pa_m,bar_m",No
+Rate Of Change Of Density,kg/m3-s,kg_m3s,No
+Rate Of Change Of Pressure,pa/s,pa_s,No
+Rate Of Change Of Temperature,"F/s,C/s,K/s,R/s,C/min,F/min,C/h,F/h","f_s,c_s,k_s,r_s,c_m,f_m,c_h,f_h",No
+Revolutions Per Time,rpm,rpm,No
+Specific Capacity ,"ft3/R,m3/R","ft3_r,m3_r",No
+Specific Enthalpy,"btu/lb,cal/kg,J/kg,J/g,kJ/kg","btu_lb,cal_kg,j_kg,j_g,kj_kg",No
+Specific Mole,"mol/g,mol/kg,lbmol/lb","mol_g,mol_kg,lbmol_lb",No
+Specific Volume,"cm3/g,ft3/lb,in3/lb,m3/kg","cm3_g,ft3_lb,in3_lb,m3_kg",No
+Standard Volume,"scm3,MMscf,sgal,sL,scf,sm3, sbbl,Mscf,Msm3","scm3,mmscf,sgal,sl,scf,sm3,sbbl,mscf,msm3",No
+Standard Volumetric Flowrate,"MMscf/d,scf/d, scf/h,scf/s,sm3/d,sm3/h,sm3/s,sbbl/d,sbbl/h, sbbl/min,Mscf/d,Msm3/d, Msm3/h","mmscf_d,scf_d,scf_h,scf_s,sm3_d,sm3_h,sm3_s,sbbl_d,sbbl_h,sbbl_min,mscf_d,msm3_d,msm3_h",No
+Standard Volumetric Flowrate Per Length,"sbbl/d/ft,m2/s,mm2/s,cm2/s","sbbl_d_ft,m2_s,mm2_s,cm2_s",No
+Temperature Gradient,F/ft,f_ft,No
+Thermal Expansion,"1/C,1/F,1/K,1/R","one_c,one_f,one_k,one_r",No
+Time,"d,h,ms,min,s,yr","d or day,h or hour,ms,min or minute,s or second,y or year",No
+Torque,"ft-lb,mN-m,N-cm,N-m","ftlb,mnm,ncm,nm",No
+Velocity,"ft/h,ft/s,m/h,m/s,mph,in/h,in/s, km/s,km/h","ft_h,ft_s,m_h,m_s,mph,in_h,in_s,km_s,km_h",No
+Volumetric Flowrate,"bbl/d,bbl/h,bbl/min,ft3/d,ft3/h, ft3/min,ft3/s,m3/d,m3/h,m3/s, gpm,L/min,mL/min","bbl_d,bbl_h,bbl_m,ft3_d,ft3_h,ft3_m,ft3_s,m3_d,m3_h,m3_s,gpm,l_m,ml_m",No
+Wax Volume,"bbl,cm3,ft3,m3,gal,L ","bbl,cm3,ft3,m3,gal,l",No
