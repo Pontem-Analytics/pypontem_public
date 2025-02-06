@@ -55,7 +55,7 @@ metadata = tpl.metadata
 print(metadata)
 ```
 
-For a detailed walkthrough, check the **[official documentation](#)**.
+For a detailed walkthrough, check the **[official documentation](http://www.pypontem.pontemanalytics.com/)**.
 
 ## Contributing
 We welcome contributions! Follow these steps to contribute:
@@ -69,7 +69,7 @@ We welcome contributions! Follow these steps to contribute:
 - **Pontem Analytics**
 
 ## Further Resources
-- 📚 **[Official Documentation](#)** – Learn how to use pypontem effectively.
+- 📚 **[Official Documentation](http://www.pypontem.pontemanalytics.com/)** – Learn how to use pypontem effectively.
 - 💻 **[GitHub Repository](https://github.com/Pontem-Analytics/pypontem_public)** – Explore the source code, contribute, or report issues.
 
 ## License
