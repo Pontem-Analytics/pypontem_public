@@ -1,0 +1,3 @@
+﻿varname,locname,pipename,row_number,out_unit,time_unit
+PT,JUMPER-1,,,psig,hour
+TM,FLOWLINE-1,,,degK,hour

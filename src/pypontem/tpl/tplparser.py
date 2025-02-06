@@ -340,14 +340,14 @@ class tplParser:
                 locator_name = match.group("branch") or None
 
             out_unit = match.group("unit") or None
-            if out_unit:
-                out_unit = re.sub(
-                    r"[\(\)]", "", out_unit
-                )  # Remove brackets but keep the content inside
-                out_unit = out_unit.replace(
-                    "/", "_"
-                )  # Replace slashes with underscores
-                out_unit = out_unit.lower()  # Convert to lowercase
+            # if out_unit:
+            #     out_unit = re.sub(
+            #         r"[\(\)]", "", out_unit
+            #     )  # Remove brackets but keep the content inside
+            #     out_unit = out_unit.replace(
+            #         "/", "_"
+            #     )  # Replace slashes with underscores
+            #     out_unit = out_unit.lower()  # Convert to lowercase
 
             data_list.append(
                 {
@@ -395,7 +395,7 @@ class tplParser:
         Search for variables in the DataFrame based on variable names, branches, and pipe names, and display their information.
         
         Arguments:
-            - input_matrix (csv): Path to the CSV file containing variable names, branch names, and pipe names.
+            - input_matrix (pd.DataFrame): The matrix containing variable names, branch names, and pipe names.
         
         Returns:
             - pandas.DataFrame: A DataFrame containing information for all specified variables.
@@ -514,7 +514,7 @@ class tplParser:
         Calculate the average of values in the DataFrame between the specified start and end indices.
         
         Arguments:
-            - input_matrix (csv): The csv file containing variable names, branch names, and pipe names. This is a required argument
+            - input_matrix (pd.DataFrame): The matrix containing variable names, branch names, and pipe names. This is a required argument
             - start_index (int, optional): The starting index from which the average will be calculated. Defaults to None.
             - end_index (int, optional): The ending index up to which the average will be calculated. Defaults to None.
             - n_rows (int, optional): Number of rows to consider for calculating the average. If provided, start_index and end_index are ignored. Defaults to None.
@@ -702,7 +702,7 @@ class tplBatchParser:
         Function to extract trends from a batch of tpl files
         
         Arguments:
-            - Input_matrix (csv): The matrix containing variable names, branch names, and pipe names. This is a required argument
+            - Input_matrix (pd.DataFrame): The matrix containing variable names, branch names, and pipe names. This is a required argument
         
         Returns
             - pandas.DataFrame: DataFrame containing extracted trends from tpl files
@@ -734,7 +734,7 @@ class tplBatchParser:
         Calculate the average of values in the DataFrame up to the specified index or of the last n values.
 
         Arguments:
-            - input_matrix (csv): The csv file containing variable names, branch names, and pipe names. This is a required argument
+            - input_matrix (pd.DataFrame): The matrix containing variable names, branch names, and pipe names. This is a required argument
             - start_index (int, optional): The starting index from which the average will be calculated. Defaults to None.
             - end_index (int, optional): The ending index up to which the average will be calculated. Defaults to None.
             - n_rows (int, optional): Number of rows to consider for calculating the average. If provided, start_index and end_index are ignored. Defaults to None.

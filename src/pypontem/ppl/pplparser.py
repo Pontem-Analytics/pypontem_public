@@ -93,7 +93,7 @@ class pplParser:
         4.parse_number_of_variables: to extract the number of variables present in a ppl file
         5. extract_catalog: to extract 
         6. search_catalog: to extract the information from the catalog of the variable specified
-        7. extract_trends: to extract trends in a ppl file
+        7. extract_profiles: to extract profiles in a ppl file
         8. extract_trend_join_nodes: to join nodes of branches extracted in a ppl file	
     """
 
@@ -475,15 +475,15 @@ class pplParser:
         df_final = pd.DataFrame(transposed_data, columns=columns)
         return df_final
 
-    def extract_trend(
+    def extract_profile(
             self, 
             input_matrix: pd.DataFrame 
             ):
         """
-        Extracts and processes trend data from an input matrix, performing unit conversions and time filtering.
+        Extracts and processes profile data from an input matrix, performing unit conversions and time filtering.
         
         Arguments:
-            - input_matrix (csv): A csv file containing input data, including variable names, branches, units, and time specifications.
+            - input_matrix (pd.DataFrame): The matrix file containing input data, including variable names, branches, units, and time specifications.
         
         Returns:
             - pandas.DataFrame: A combined DataFrame containing the processed trend data with converted units and filtered time ranges.
@@ -649,23 +649,23 @@ class pplParser:
         return combined_df
         
 
-    def extract_trends_join_nodes(
+    def extract_profiles_join_nodes(
             self,
             input_matrix: pd.DataFrame,
             branch_matrix: pd.DataFrame,
     ):
         """ 
-        Extracts and processes trend data for branches, combining boundary and section data. 
+        Extracts and processes profile data for branches, combining boundary and section data. 
         
         Arguments:
-            - input_matrix (csv): A csv file containing trend data for various branches with columns ['branchname', 'varname', 'out_unit', 'out_unit_profile', 'time_unit']. 
-            - branch_matrix (csv): A csv file containing information about branch connections with columns ['branch_in', 'branch_out']. 
+            - input_matrix (pd.DataFrame): A matrix containing trend data for various branches with columns ['branchname', 'varname', 'out_unit', 'out_unit_profile', 'time_unit']. 
+            - branch_matrix (pd.DataFrame): A matrix containing information about branch connections with columns ['branch_in', 'branch_out']. 
         
         Returns: 
             - pandas.DataFrame: A combined DataFrame containing processed trend data for the specified branches, including boundary and section data, with consistent units and profiles. 
         """
 
-        data_df = self.extract_trend(input_matrix) 
+        data_df = self.extract_profile(input_matrix) 
         catalog = self._extract_catalog()
         df_catalog = catalog.filter(items=['Name','Locator Type','Locator Name'])
         branch_profiles = self.branch_profiles
@@ -860,7 +860,7 @@ class pplBatchParser:
     Class to handle batches of ppl files
     
     Functions:
-        1. extract_trends: to extract trends from a list of ppl files
+        1. extract_profiles: to extract profiles from a list of ppl files
         2. join_batch_nodes: to join nodes of branches extracted from a list of ppl files
     """
 
@@ -878,20 +878,20 @@ class pplBatchParser:
         self.list_of_files = list_of_files
         self.files = [pplParser(file) for file in list_of_files]
 
-    def extract_trends(self, input_matrix: pd.DataFrame):
+    def extract_profiles(self, input_matrix: pd.DataFrame):
         """
-        Function to extract trends from a batch of ppl files
+        Function to extract profiles from a batch of ppl files
         
         Arguments:
-            - Input_matrix (csv): A csv file containing variable names, branch names, and pipe names. This is a required argument.
+            - Input_matrix (pd.DataFrame): A matrix containing variable names, branch names, and pipe names. This is a required argument.
 
         Returns
-            - pandas.DataFrame: DataFrame containing extracted trends from ppl files
+            - pandas.DataFrame: DataFrame containing extracted profiles from ppl files
         """
 
         # create suffixes for distinguishing between columns
         suffixes = ["_" + str(os.path.basename(file)) for file in self.list_of_files]
-        list_of_dfs = [file.extract_trend(input_matrix) for file in self.files]
+        list_of_dfs = [file.extract_profile(input_matrix) for file in self.files]
         # attaching suffixes to dataframes
         for i in range(len(list_of_dfs)):
             list_of_dfs[i] = list_of_dfs[i].add_suffix(suffixes[i])
@@ -904,19 +904,19 @@ class pplBatchParser:
 
     def join_batch_nodes(self, input_matrix: pd.DataFrame, branch_matrix: pd.DataFrame):
         """
-        Extracts and processes trend data for branches, combining boundary and section data from a list of ppl files. 
+        Extracts and processes profiles data for branches, combining boundary and section data from a list of ppl files. 
         
         Arguments:
-            - input_matrix (csv): A csv file containing trend data for various branches with columns ['branchname', 'varname', 'out_unit', 'out_unit_profile', 'time_unit']. 
-            - branch_matrix (csv): A csv file containing information about branch connections with columns ['branch_in', 'branch_out']. 
+            - input_matrix (pd.DataFrame): The matrix containing trend data for various branches with columns ['branchname', 'varname', 'out_unit', 'out_unit_profile', 'time_unit']. 
+            - branch_matrix (pd.DataFrame): The matrix containing information about branch connections with columns ['branch_in', 'branch_out']. 
 
         Returns: 
-            - pandas.DataFrame: A combined DataFrame containing processed trend data for the specified branches, including boundary and section data, with consistent units and profiles. 
+            - pandas.DataFrame: A combined DataFrame containing processed profiles data for the specified branches, including boundary and section data, with consistent units and profiles. 
         """
 
         # create suffixes for distinguishing between columns
         suffixes = ["_" + str(os.path.basename(file)) for file in self.list_of_files]
-        list_of_dfs = [file.extract_trends_join_nodes(input_matrix, branch_matrix) for file in self.files]
+        list_of_dfs = [file.extract_profiles_join_nodes(input_matrix, branch_matrix) for file in self.files]
         # attaching suffixes to dataframes
         for i in range(len(list_of_dfs)):
             list_of_dfs[i] = list_of_dfs[i].add_suffix(suffixes[i])
@@ -970,8 +970,8 @@ if __name__ == "__main__":
         # catalog = pplparser._extract_catalog()
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
-        # trends = pplparser.extract_trend(input_matrix= input_matrix)
-        nodes = pplparser.extract_trends_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
+        # trends = pplparser.extract_profile(input_matrix= input_matrix)
+        nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
         print(nodes)
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)
