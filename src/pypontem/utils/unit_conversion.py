@@ -1404,6 +1404,8 @@ class UnitConversion:
             }
             if self.unit in unit_map:
                 self.unit = unit_map[self.unit]
+                if to_unit in unit_map:
+                    to_unit = unit_map[to_unit]
                 temp = Q_(self.value, self.unit)
                 converted = temp.to(to_unit)
                 return converted.magnitude

@@ -9,7 +9,7 @@ DESCRIPTION = "The one-stop python toolkit for Flow Assurance workflows"
 URL = "https://github.com/Pontem-Analytics/pypontem_public/tree/main"
 
 REQUIRES_PYTHON = "==3.12.3"
-VERSION = "1.0.6"
+VERSION = "1.0.7"
 REQUIRED = ["pandas==2.2.0", "pint==0.23", "PyYAML==6.0.2"]
 # EXTRAS = {""}
 

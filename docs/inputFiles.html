@@ -1,0 +1,323 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PyPontem Documentation documentation &mdash; PyPontem Documentation 1.0.0 documentation</title>
+        <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+        <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+  
+    
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9bcbadda"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/js/theme.js"></script>
+      <link rel="index" title="Index" href="genindex.html" />
+      <link rel="search" title="Search" href="search.html" />
+      <link rel="next" title="pypontem" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+      <div class="wy-grid-for-nav">
+        <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+          <div class="wy-side-scroll">
+            <div class="wy-side-nav-search" >
+    
+              
+              
+              <a href="#" class="icon icon-home">
+                PyPontem Documentation
+              </a>
+    <div role="search">
+      <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+        <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+            </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+                  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+                  <ul class="sidebar-menu">
+                    <li class="toctree-l1"><a class="reference internal" href="index.html">Introduction to pypontem</a></li>
+                    <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+                  
+                    <li class="toctree-l1" style="padding-left: 20px;color: #d9d9d9; font-weight: 400;">TPL parsing</li>
+                      <ul class="dropdown-menu" style="padding-left: 20px;">
+                        <li class="toctree-l1"><a class="reference internal" href="tpl.html">Class & Method Description</a></li>
+                        <li class="toctree-l1"><a class="reference internal" href="code_tpl.html">Code Examples</a></li>
+                      </ul>
+                    
+                  
+                    <li class="toctree-l1" style="padding-left: 20px;color: #d9d9d9; font-weight: 400;">PPL parsing</li>
+                      <ul class="dropdown-menu" style="padding-left: 20px;">
+                        <li class="toctree-l1"><a class="reference internal" href="ppl.html">Class & Method Description</a></li>
+                        <li class="toctree-l1"><a class="reference internal" href="code_ppl.html">Code Examples</a></li>
+                      </ul>
+                    
+                    <li class="toctree-l1"><a class="reference internal" href="inputFiles.html">Input matrix templates</a></li>
+                    <li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
+                  </ul>
+                  
+                   
+                  
+    
+            </div>
+          </div>
+        </nav>
+  
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PyPontem Documentation</a>
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+      <div class="container my-4">
+        <div class="row">
+            <!-- Left Column: Table -->
+             <h1 class="text-center">Input matrix templates</h1>
+            <div class="col-md-6">
+                <h3 class="text-center mb-4">1. TPL input matrix</h3>
+                <p>This is a matrix used for simplifying the extraction of trends of more than one variable at different locations 
+                    and specifying wich unit you want the output in. The matrix is in the form of a table with the following columns:</p>
+                </p>
+                <table class="table table-bordered table-hover" border="1">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>varname</th>
+                            <th>locname</th>
+                            <th>pipename</th>
+                            <th>row_number</th>
+                            <th>out_unit</th>
+                            <th>time_unit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>QLT</td>
+                            <td>C TO B</td>
+                            <td></td>
+                            <td></td>
+                            <td>ft3_d</td>
+                            <td>h</td>
+                        </tr>
+                        <tr>
+                            <td>QLT</td>
+                            <td>C JUMPER</td>
+                            <td></td>
+                            <td></td>
+                            <td>ft3_d</td>
+                            <td>h</td>
+                        </tr>
+                        <tr>
+                            <td>QLT</td>
+                            <td>B TO A</td>
+                            <td></td>
+                            <td></td>
+                            <td>ft3_d</td>
+                            <td>h</td>
+                        </tr>
+                        <tr>
+                            <td>PT</td>
+                            <td>C JUMPER</td>
+                            <td></td>
+                            <td></td>
+                            <td>pa</td>
+                            <td>h</td>
+                        </tr>
+                        <tr>
+                            <td>PT</td>
+                            <td>C TO B</td>
+                            <td></td>
+                            <td></td>
+                            <td>pa</td>
+                            <td>h</td>
+                        </tr>
+                        <tr>
+                            <td>PT</td>
+                            <td>B TO A</td>
+                            <td></td>
+                            <td></td>
+                            <td>pa</td>
+                            <td>h</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Right Column: Description -->
+            <div class="col-md-6" style="padding-top: 20px;">
+                <h3 class="text-center mb-4">Description</h3>
+                <p><strong>varname</strong>: Name of variable as specified in OLGA file</p>
+                <p><strong>locname</strong>: Location name for the variable. This could be a branch name or position name</p>
+                <p><strong>pipename</strong>: The name of the pipe. Some variables may not need this, in which case it can be left blank</p>
+                <p><strong>row_number</strong>: The number of rows you want in the output for extract_trend</p>
+                <p><strong>out_unit</strong>: The output unit you desire. If you leave this blank, default units within the OLGA file will be used. <em>NOTE</em>: The list of compatible units, and the syntax is provided <a href="logbook.html">here</a>.
+                <b>If you do not use the syntax provided, there will be errors.</b></p>
+                <p><strong>time_unit</strong>: The unit of time you desire the outputs in.</p>
+            </div>
+        </div>
+    </div>
+    <div class="container my-4">
+        <div class="row">
+            <!-- Left Column: Table -->
+             <!-- <h1 class="text-center">PPL input_matrix format</h1> -->
+            <div class="col-md-8">
+                <h3 class="text-center mb-4">2. PPL input matrix</h3>
+                <p>This is a matrix used for simplifying the extraction of trends of more than one variable at different locations 
+                    and specifying wich unit you want the output in. The matrix is in the form of a table with the following columns:</p>
+                </p>
+                <table class="table table-bordered table-hover" border="1">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>varname</th>
+                            <th>branchname</th>
+                            <th>out_unit</th>
+                            <th>out_unit_profile</th>
+                            <th>time_unit</th>
+                            <th>start_time</th>
+                            <th>end_time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>QLT</td>
+                            <td>FLOWLINE_1</td>
+                            <td>m3_s</td>
+                            <td>ft</td>
+                            <td>h</td>
+                            <td>0</td>
+                            <td>4</td>
+                        </tr>
+                        <tr>
+                            <td>QLT</td>
+                            <td>RISER_1</td>
+                            <td>m3_s</td>
+                            <td>ft</td>
+                            <td>h</td>
+                            <td>0</td>
+                            <td>4</td>
+                        </tr>
+                        <tr>
+                            <td>QLT</td>
+                            <td>WELLBORE_1</td>
+                            <td>m3_s</td>
+                            <td>ft</td>
+                            <td>h</td>
+                            <td>0</td>
+                            <td>4</td>
+                        </tr>
+                        <tr>
+                            <td>PT</td>
+                            <td>FLOWLINE_1</td>
+                            <td>pa</td>
+                            <td>ft</td>
+                            <td>h</td>
+                            <td>0</td>
+                            <td>4</td>
+                        </tr>
+                        <tr>
+                            <td>PT</td>
+                            <td>RISER_1</td>
+                            <td>pa</td>
+                            <td>ft</td>
+                            <td>h</td>
+                            <td>0</td>
+                            <td>4</td>
+                        </tr>
+                        <tr>
+                            <td>PT</td>
+                            <td>WELLBORE_1</td>
+                            <td>pa</td>
+                            <td>ft</td>
+                            <td>h</td>
+                            <td>0</td>
+                            <td>4</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Right Column: Description -->
+            <div class="col-md-4" style="padding-top: 20px;">
+                <h3 class="text-center mb-4">Description</h3>
+                <p><strong>varname</strong>: Name of variable as specified in OLGA file</p>
+                <p><strong>branchname</strong>: Location name for the variable. This could be a branch name or position name</p>
+                <p><strong>out_unit</strong>: The output unit you desire. If you leave this blank, default units within the OLGA file will be used. NOTE: The list of compatible units, and the syntax is provided <a href="logbook.html">here</a>. 
+                <b>If you do not use the syntax provided, there will be errors.</b></p>
+                <p><strong>out_unit_profile</strong>: The unit of profiles you want your outputs in.</p>
+                <p><strong>time_unit</strong>: The unit of time you desire the outputs in.</p>
+                <p><strong>start_time</strong>: The starting time of the timestamp range you want to extract trends.</p>
+                <p><strong>end_time</strong>: the ending time of the timestamp range you want to extract trends.</p>
+            
+            </div>
+        </div>
+    </div>
+
+    <div class="container my-4">
+        <div class="row">
+            <!-- Left Column: Table -->
+             <!-- <h1 class="text-center">PPL branch_matrix format</h1> -->
+            <div class="col-md-6">
+                <h3 class="text-center mb-4">3. PPL branch matrix</h3>
+                <p>This is a matrix used specifically when joining the branches in a ppl file</p>
+                <table class="table table-bordered table-hover" border="1">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>branch_in</th>
+                            <th>branch_out</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>FLOWLINE_1</td>
+                            <td>RISER_1</td>
+                        </tr>
+                        <tr>
+                            <td>RISER_1</td>
+                            <td>WELLBORE_1</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Right Column: Description -->
+            <div class="col-md-6" style="padding-top: 20px;">
+                <h3 class="text-center mb-4">Description</h3>
+                <p><strong>branch_in</strong>: Names of starting branches.</p>
+                <p><strong>branch_out</strong>: Names of ending branches.</p>
+            </div>
+        </div>
+    </div>
+</body>
+<footer style="text-align: center;"><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+    <a href="code_ppl.html" class="btn btn-neutral float-left" title="utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    <a href="utils.html" class="btn btn-neutral float-right" title="index package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a> -->
+</div>
+
+<hr/>
+
+<div role="contentinfo">
+<p>&#169; Copyright 2025, Pontem Analytics.</p>
+</div>
+
+Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+<a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+    </div>
+  </div>
+</section>
+</div>
+<script>
+  jQuery(function () {
+      SphinxRtdTheme.Navigation.enable(true);
+  });
+</script> 
+
+</html>

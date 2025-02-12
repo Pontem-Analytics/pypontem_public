@@ -1,0 +1,975 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pypontem.tpl.tplparser &mdash; PyPontem Documentation 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            PyPontem Documentation
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">pypontem</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">PyPontem Documentation</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pypontem.tpl.tplparser</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pypontem.tpl.tplparser</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">TPL parser functionality</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="c1"># temporary to remove pandas 3.0 deprecationwarning about pyarrow from printing</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pypontem.utils.unit_conversion</span> <span class="kn">import</span> <span class="n">UnitConversion</span><span class="p">,</span> <span class="n">unit_map</span>
+
+<span class="n">current_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">YAML_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_dir</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;utils&quot;</span><span class="p">,</span> <span class="s2">&quot;units.yaml&quot;</span><span class="p">)</span>
+
+<span class="c1"># YAML_PATH = &quot;src/pypontem/utils/units.yaml&quot;</span>
+
+
+<div class="viewcode-block" id="read_file">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.read_file">[docs]</a>
+<span class="k">def</span> <span class="nf">read_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">content</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;The file specified &#39;</span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&#39; does not exist. Please verify the location of the file.&quot;</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="open_yaml">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.open_yaml">[docs]</a>
+<span class="k">def</span> <span class="nf">open_yaml</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">yaml_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="n">unitsdb</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">unitsdb</span></div>
+
+
+
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_rows&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_columns&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_colwidth&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="search">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.search">[docs]</a>
+<span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">var_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">loc_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pipe_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Searches for variables containing a keyword in their names within a DataFrame.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            df (pandas.DataFrame): The DataFrame to search within.</span>
+<span class="sd">            keyword (str): The keyword to search for.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filter_conditions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">var_name</span><span class="p">:</span>
+        <span class="n">var_name</span> <span class="o">=</span> <span class="n">var_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">filter_conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;varname&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">var_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">loc_name</span><span class="p">:</span>
+        <span class="n">loc_name</span> <span class="o">=</span> <span class="n">loc_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">filter_conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;locname&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">loc_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pipe_name</span><span class="p">:</span>
+        <span class="n">pipe_name</span> <span class="o">=</span> <span class="n">pipe_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">filter_conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">&quot;pipename&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">pipe_name</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filter_conditions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">result_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">&amp;</span> <span class="n">y</span><span class="p">,</span> <span class="n">filter_conditions</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">filter_conditions</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">result_df</span></div>
+
+
+
+<div class="viewcode-block" id="tplParser">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.tplParser">[docs]</a>
+<span class="k">class</span> <span class="nc">tplParser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class which holds the tpl parser functions</span>
+
+<span class="sd">    Functions:</span>
+<span class="sd">        1. metadata: to extract metadata from a tpl file</span>
+<span class="sd">        2. branch_names: to extract branch names from a tpl file</span>
+<span class="sd">        3. branch_profiles: to extract branch profile information from a tpl file</span>
+<span class="sd">        4. parse_number_of_variables: to extract the number of variables present in a tpl file</span>
+<span class="sd">        5. extract_catalog: to extract the catalog information from a tpl file</span>
+<span class="sd">        6. search_catalog: to extract the information from the catalog of the variable specified</span>
+<span class="sd">        7. extract_trends: to extract trends in a tpl file</span>
+<span class="sd">        8. calc_average: to compute the average of trends extracted in a tpl file	</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes an instance of the class by loading file data and unit definitions.</span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - filepath (str): The path to the file to be loaded.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># read file from path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="c1"># save content of file in memory so we don&#39;t open it repeatedly - NOTE: may need to be changed later</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="c1"># open unit yaml file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unitsdb</span> <span class="o">=</span> <span class="n">open_yaml</span><span class="p">(</span><span class="n">YAML_PATH</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts metadata from the content stored in the object and returns it as a pandas DataFrame.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters:</span>
+<span class="sd">        - None</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - pandas.DataFrame: A DataFrame containing the extracted metadata with keys as column headers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_metadata</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_extract_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Dictionary to store metadata</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">branch_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;BRANCH</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">branch_index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+        <span class="c1"># Extract metadata before &quot;BRANCH&quot;</span>
+        <span class="n">metadata_lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">[:</span><span class="n">branch_index</span><span class="p">]</span>
+
+        <span class="c1"># Parsing specific metadata and storing in dictionary</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">metadata_lines</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()):</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">olga_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;OLGA\s+(\S+)&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">olga_match</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="s2">&quot;INPUT FILE&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;Input file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">metadata_lines</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">elif</span> <span class="s2">&quot;PVT FILE&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pvt&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">metadata_lines</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">elif</span> <span class="s2">&quot;DATE&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">metadata_lines</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">elif</span> <span class="s2">&quot;PROJECT&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;project&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">metadata_lines</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">elif</span> <span class="s2">&quot;TITLE&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">metadata_lines</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">elif</span> <span class="s2">&quot;AUTHOR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;author&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">metadata_lines</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="k">elif</span> <span class="s2">&quot;GEOMETRY&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\((.*?)\)&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                    <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">branch_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts branch names from the content stored in the object.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - None.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - list: A list of extracted branch names as strings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_branch_names</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_extract_branch_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">df_branch_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="s2">&quot;(BRANCH|ANNULUS)</span><span class="se">\n</span><span class="s2">(.+)&quot;</span>
+        <span class="n">branch_names</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">branch</span> <span class="ow">in</span> <span class="n">branch_names</span><span class="p">:</span>
+            <span class="n">df_branch_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">branch</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">)</span>  <span class="c1"># Accessing the second element (branch name) of each tuple</span>
+        <span class="k">return</span> <span class="n">df_branch_names</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">branch_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts and displays elevation for a specific branch or all branches in the file.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - None.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - Pandas.Dataframe: a dataframe containing the profiles of the specified branch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_branch_profiles</span><span class="p">(</span><span class="n">target_branch</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_extract_branch_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_branch</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">create_branch_table</span><span class="p">(</span><span class="n">branch_data</span><span class="p">):</span>
+            <span class="c1"># Ensure lengths and elevations have the same length</span>
+            <span class="n">min_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">branch_data</span><span class="p">[</span><span class="s2">&quot;Lengths&quot;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">branch_data</span><span class="p">[</span><span class="s2">&quot;Elevations&quot;</span><span class="p">])</span>
+            <span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;Lengths_(&quot;</span>
+                    <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                    <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">:</span> <span class="n">branch_data</span><span class="p">[</span><span class="s2">&quot;Lengths&quot;</span><span class="p">][:</span><span class="n">min_length</span><span class="p">],</span>
+                    <span class="s2">&quot;Elevations_(&quot;</span>
+                    <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                    <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">:</span> <span class="n">branch_data</span><span class="p">[</span><span class="s2">&quot;Elevations&quot;</span><span class="p">][:</span><span class="n">min_length</span><span class="p">],</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">df</span>
+
+        <span class="c1"># Define a pattern to match each &#39;BRANCH&#39; section</span>
+        <span class="n">branch_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;(BRANCH|ANNULUS)\n&#39;(.*?)&#39;\n(\d+)\n([\s\S]*?)(?=(BRANCH|ANNULUS)|\nCATALOG)&quot;</span><span class="p">,</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Find all matches</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="n">branch_pattern</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Flag to check if the target branch is found</span>
+
+        <span class="n">branches</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="n">branch_data</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">branch_name</span> <span class="o">=</span> <span class="n">match</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">num_pipes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">data_section</span> <span class="o">=</span> <span class="n">match</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">data_section</span><span class="p">:</span>
+                <span class="n">midpoint</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_section</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+                <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_section</span><span class="p">[:</span><span class="n">midpoint</span><span class="p">]]</span>
+                <span class="n">elevations</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_section</span><span class="p">[</span><span class="n">midpoint</span><span class="p">:]]</span>
+                <span class="n">branch_data</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;Branch&quot;</span><span class="p">:</span> <span class="n">branch_name</span><span class="p">,</span>
+                    <span class="s2">&quot;Lengths&quot;</span><span class="p">:</span> <span class="n">lengths</span><span class="p">,</span>
+                    <span class="s2">&quot;Elevations&quot;</span><span class="p">:</span> <span class="n">elevations</span><span class="p">,</span>
+                <span class="p">}</span>
+
+                <span class="c1"># Display branch data only if it matches the target branch</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">target_branch</span> <span class="ow">or</span> <span class="n">branch_name</span> <span class="o">==</span> <span class="n">target_branch</span><span class="p">:</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Set found to True if the branch is found</span>
+                    <span class="n">profile</span> <span class="o">=</span> <span class="n">create_branch_table</span><span class="p">(</span><span class="n">branch_data</span><span class="p">)</span>
+                    <span class="n">branches</span><span class="p">[</span><span class="n">branch_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">profile</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">found</span> <span class="ow">and</span> <span class="n">target_branch</span>
+        <span class="p">):</span>  <span class="c1"># Display message if branch not found and target_branch is provided</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The branch &#39;</span><span class="si">{</span><span class="n">target_branch</span><span class="si">}</span><span class="s2">&#39; does not exist in the file.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">branches</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parses the number of variables from a given file path.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - None</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - n_vars (int): The number of variables if found, else None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_number_of_variables</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_parse_number_of_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># regex pattern which finds the next line after CATALOG</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;CATALOG[\r \n]+([^\r\n]+)&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">pattern</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract variable information from the provided content using a regular expression pattern.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            - pandas.DataFrame: A DataFrame containing the extracted variable information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_catalog</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_extract_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+<span class="w">            </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            (?P&lt;name&gt;\S+)                      # variable name</span>
+<span class="sd">            \s+&#39;(?P&lt;locator_type&gt;[^&#39;]*)&#39;       # locator type</span>
+<span class="sd">            (\s+&#39;(?P&lt;locator_name&gt;[^&#39;]*)&#39;)?    # locator name (optional)</span>
+<span class="sd">            (\s+&#39;(?P&lt;branch&gt;[^&#39;]*)&#39;)?          # branch (optional)</span>
+<span class="sd">            (\s+&#39;(?P&lt;pipe&gt;[^&#39;]*)&#39;)?            # pipe (optional)</span>
+<span class="sd">            (\s+&#39;(?P&lt;pipe_name&gt;[^&#39;]*)&#39;)?       # pipe name (optional)</span>
+<span class="sd">            (\s+&#39;(?P&lt;pipe_nr&gt;[^&#39;]*)&#39;)?         # pipe nr (optional)</span>
+<span class="sd">            (\s+&#39;(?P&lt;pipe_number&gt;[^&#39;]*)&#39;)?     # pipe number (optional)</span>
+<span class="sd">            \s+&#39;(?P&lt;unit&gt;[^&#39;]*)&#39;               # unit</span>
+<span class="sd">            \s+&#39;(?P&lt;description&gt;[^&#39;]*)&#39;        # description</span>
+<span class="sd">            &quot;&quot;&quot;</span><span class="p">,</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">VERBOSE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="n">catalog_index</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;CATALOG&quot;</span>
+                <span class="ow">and</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Extract variable information from the lines after the &quot;CATALOG&quot; line</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="n">catalog_index</span><span class="p">:]))</span>
+        <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Iterate over matches and extract data</span>
+        <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="n">locator_name</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;locator_name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">locator_name</span> <span class="o">==</span> <span class="s2">&quot;BRANCH:&quot;</span><span class="p">:</span>
+                <span class="n">locator_name</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;branch&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+
+            <span class="n">out_unit</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;unit&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">out_unit</span><span class="p">:</span>
+                <span class="n">out_unit</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+                    <span class="sa">r</span><span class="s2">&quot;[\(\)]&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">out_unit</span>
+                <span class="p">)</span>  <span class="c1"># Remove brackets but keep the content inside</span>
+                <span class="n">out_unit</span> <span class="o">=</span> <span class="n">out_unit</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span>
+                <span class="p">)</span>  <span class="c1"># Replace slashes with underscores</span>
+                <span class="n">out_unit</span> <span class="o">=</span> <span class="n">out_unit</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>  <span class="c1"># Convert to lowercase</span>
+
+            <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;varname&quot;</span><span class="p">:</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">),</span>
+                    <span class="s2">&quot;Locator Type&quot;</span><span class="p">:</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;locator_type&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="s2">&quot;locname&quot;</span><span class="p">:</span> <span class="n">locator_name</span><span class="p">,</span>
+                    <span class="c1"># &quot;Branch&quot;: match.group(&quot;branch&quot;) or None,</span>
+                    <span class="c1"># &quot;Pipe&quot;: match.group(&quot;pipe&quot;) or None,</span>
+                    <span class="s2">&quot;pipename&quot;</span><span class="p">:</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;pipe_name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="c1"># &quot;Pipe Nr&quot;: match.group(&quot;pipe_nr&quot;) or None,</span>
+                    <span class="c1"># &quot;Pipe Number&quot;: match.group(&quot;pipe_number&quot;) or None,</span>
+                    <span class="s2">&quot;out_unit&quot;</span><span class="p">:</span> <span class="n">out_unit</span><span class="p">,</span>
+                    <span class="s2">&quot;Description&quot;</span><span class="p">:</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span>
+        <span class="c1"># df = df_catalog.drop(columns=[&quot;Locator Type&quot;])</span>
+        <span class="c1"># df = df.drop(columns=[&quot;Pipe Nr&quot;])</span>
+        <span class="c1"># df = df.drop(columns=[&quot;Pipe&quot;])</span>
+        <span class="c1"># df = df.drop(columns=[&quot;Branch&quot;])</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+<div class="viewcode-block" id="tplParser.search_catalog">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.tplParser.search_catalog">[docs]</a>
+    <span class="k">def</span> <span class="nf">search_catalog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">loc_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pipe_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Searches for variables containing a keyword in their names within a DataFrame.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - Var_name (str): The variable name</span>
+<span class="sd">            - Loc_name (str): The location of the variable you want to search for</span>
+<span class="sd">            - Pipe_name (str): the pipe name of the variable name specified located at the location name provided.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - Pandas.DataFrame: a dataframe containing catalog information of the variables specified.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">catalog</span>
+        <span class="n">result_df</span> <span class="o">=</span> <span class="n">search</span><span class="p">(</span><span class="n">cat</span><span class="p">,</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">loc_name</span><span class="p">,</span> <span class="n">pipe_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;We don&#39;t have </span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2"> in our catalog.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result_df</span></div>
+
+
+<div class="viewcode-block" id="tplParser.extract_trend">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.tplParser.extract_trend">[docs]</a>
+    <span class="k">def</span> <span class="nf">extract_trend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_matrix</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Search for variables in the DataFrame based on variable names, branches, and pipe names, and display their information.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - input_matrix (csv): Path to the CSV file containing variable names, branch names, and pipe names.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - pandas.DataFrame: A DataFrame containing information for all specified variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trends</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_time_series_data</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trends</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">catalog</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trends</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">result_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">input_matrix</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">var_name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;varname&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">var_name</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;No variable name specified in row </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">loc_name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;locname&quot;</span><span class="p">]</span>
+            <span class="n">pipe_name</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;pipename&quot;</span><span class="p">]</span>
+            <span class="n">row_number</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;row_number&quot;</span><span class="p">]</span>
+            <span class="n">out_unit</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;out_unit&quot;</span><span class="p">]</span>
+            <span class="n">time_unit</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;time_unit&quot;</span><span class="p">]</span>
+
+            <span class="n">search_args</span> <span class="o">=</span> <span class="p">[</span><span class="n">var_name</span><span class="p">,</span> <span class="n">loc_name</span><span class="p">,</span> <span class="n">pipe_name</span><span class="p">]</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">search_args</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+                <span class="n">result_df</span> <span class="o">=</span> <span class="n">search</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result_df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;No data found for variable &#39;</span><span class="si">{</span><span class="n">var_name</span><span class="si">}</span><span class="s2">&#39; at branch &#39;</span><span class="si">{</span><span class="n">loc_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                    <span class="n">unit</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;out_unit&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">out_unit</span><span class="p">):</span>
+                        <span class="n">unit</span> <span class="o">=</span> <span class="n">unit</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+                        <span class="n">out_unit</span> <span class="o">=</span> <span class="n">unit</span>
+                    <span class="n">var</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;varname&quot;</span><span class="p">]</span>
+                    <span class="n">unit_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unitsdb</span><span class="p">[</span><span class="s2">&quot;OLGA_vars&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">unit_class</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unitsdb</span><span class="p">[</span><span class="s2">&quot;OLGA_startswith&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">var</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+                                <span class="n">unit_class</span> <span class="o">=</span> <span class="n">v</span>
+                    <span class="n">variable_outputs</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="s2">&quot;variable_output&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;Locator Type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;GLOBAL&quot;</span><span class="p">:</span>
+                        <span class="n">heading</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;varname&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">heading</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;varname&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">unit</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;locname&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">time_unit</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_unit</span> <span class="ow">in</span> <span class="n">unit_map</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">time_unit</span> <span class="o">=</span> <span class="n">unit_map</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">time_unit</span><span class="p">]</span>
+                            <span class="n">value_tagged</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">UnitConversion</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">)(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_unit</span>
+                            <span class="p">)</span>
+                            <span class="n">values</span> <span class="o">=</span> <span class="n">value_tagged</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">to_unit</span><span class="o">=</span><span class="n">time_unit</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">time_unit</span> <span class="ow">in</span> <span class="p">[</span>
+                                <span class="s2">&quot;hour&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;minute&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;second&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;min&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;s&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;h&quot;</span><span class="p">,</span>
+                            <span class="p">]:</span>
+                                <span class="c1"># self.time = [math.floor(value) for value in values]</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">values</span>
+                        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="sa">f</span><span class="s2">&quot;Time_(</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">time_unit</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                            <span class="n">heading</span><span class="p">:</span> <span class="n">variable_outputs</span><span class="p">,</span>
+                        <span class="p">}</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">time_unit</span> <span class="o">==</span> <span class="s2">&quot;nan&quot;</span>
+                        <span class="n">time_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_unit</span>
+                        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="sa">f</span><span class="s2">&quot;Time_(</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_unit</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+                            <span class="n">heading</span><span class="p">:</span> <span class="n">variable_outputs</span><span class="p">,</span>
+                        <span class="p">}</span>
+                    <span class="n">trend_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                    <span class="n">trend_df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time_(</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">time_unit</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">converted_vals</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">trend_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                        <span class="n">value</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">heading</span><span class="p">]</span>
+                        <span class="n">value_tagged</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">UnitConversion</span><span class="p">,</span> <span class="n">unit_class</span><span class="p">)(</span><span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
+                        <span class="n">conv_val</span> <span class="o">=</span> <span class="n">value_tagged</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">to_unit</span><span class="o">=</span><span class="n">out_unit</span><span class="p">)</span>
+                        <span class="n">converted_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">conv_val</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+                    <span class="n">trend_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">trend_df</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">trend_df</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">heading</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">unit</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_unit</span><span class="p">))]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">converted_vals</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">row_number</span><span class="p">):</span>
+                        <span class="n">row_number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row_number</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">row_number</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="n">result_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trend_df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">row_number</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">result_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trend_df</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="o">-</span><span class="n">row_number</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">result_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trend_df</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">result_dfs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">result_dfs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No data found.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="tplParser.calc_average">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.tplParser.calc_average">[docs]</a>
+    <span class="k">def</span> <span class="nf">calc_average</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_matrix</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_timeunits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the average of values in the DataFrame between the specified start and end indices.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - input_matrix (csv): The csv file containing variable names, branch names, and pipe names. This is a required argument</span>
+<span class="sd">            - start_index (int, optional): The starting index from which the average will be calculated. Defaults to None.</span>
+<span class="sd">            - end_index (int, optional): The ending index up to which the average will be calculated. Defaults to None.</span>
+<span class="sd">            - n_rows (int, optional): Number of rows to consider for calculating the average. If provided, start_index and end_index are ignored. Defaults to None.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - pandas.DataFrame: DataFrame containing the calculated averages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">data_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_trend</span><span class="p">(</span><span class="n">input_matrix</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">start_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">end_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Calculate the average between start_index and end_index</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">start_index</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+                <span class="ow">and</span> <span class="n">end_index</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+                <span class="ow">and</span> <span class="n">start_index</span> <span class="o">&lt;=</span> <span class="n">end_index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_df</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">start_index</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">end_index</span><span class="p">]</span>
+                <span class="n">average</span> <span class="o">=</span> <span class="n">sliced_df</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">average</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One of the indices is out of range&quot;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">n_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Calculate the average of number of rows specified</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_df</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">n_rows</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">n_rows</span> <span class="o">&gt;=</span> <span class="n">length</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Index out of range.&quot;</span><span class="p">)</span>
+                <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">n_rows</span><span class="p">]</span>
+                <span class="n">average</span> <span class="o">=</span> <span class="n">sliced_df</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">n_rows</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">n_rows</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">n_rows</span> <span class="o">&gt;</span> <span class="n">length</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of rows exceeds DataFrame length.&quot;</span><span class="p">)</span>
+                <span class="n">last_n_values</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="n">n_rows</span><span class="p">:]</span>
+                <span class="n">average</span> <span class="o">=</span> <span class="n">last_n_values</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">average</span>
+
+        <span class="k">elif</span> <span class="n">n_timeunits</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">hours_to_seconds</span><span class="p">(</span><span class="n">hours</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">hours</span> <span class="o">*</span> <span class="mi">3600</span>
+
+            <span class="k">def</span> <span class="nf">hours_to_minutes</span><span class="p">(</span><span class="n">hours</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">hours</span> <span class="o">*</span> <span class="mi">60</span>
+
+            <span class="k">def</span> <span class="nf">hours_to_hours</span><span class="p">(</span><span class="n">hours</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">hours</span>
+
+            <span class="k">def</span> <span class="nf">hours_to_days</span><span class="p">(</span><span class="n">hours</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">hours</span> <span class="o">/</span> <span class="mi">24</span>
+
+            <span class="k">def</span> <span class="nf">hours_to_weeks</span><span class="p">(</span><span class="n">hours</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">hours</span> <span class="o">/</span> <span class="mi">168</span>
+
+            <span class="k">def</span> <span class="nf">hours_to_months</span><span class="p">(</span><span class="n">hours</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">hours</span> <span class="o">/</span> <span class="mi">730</span>
+
+            <span class="k">def</span> <span class="nf">hours_to_years</span><span class="p">(</span><span class="n">hours</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">hours</span> <span class="o">/</span> <span class="mi">8760</span>
+
+            <span class="k">if</span> <span class="n">n_timeunits</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;second&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;s&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                        <span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">hours_to_seconds</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                    <span class="p">]</span>
+                <span class="k">elif</span> <span class="s2">&quot;minute&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;min&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                        <span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">hours_to_minutes</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                    <span class="p">]</span>
+                <span class="k">elif</span> <span class="s2">&quot;hour&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;h&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                        <span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">hours_to_hours</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                    <span class="p">]</span>
+                <span class="k">elif</span> <span class="s2">&quot;day&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;d&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">hours_to_days</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)]</span>
+                <span class="k">elif</span> <span class="s2">&quot;week&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;w&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                        <span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">hours_to_weeks</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                    <span class="p">]</span>
+                <span class="k">elif</span> <span class="s2">&quot;month&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;m&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                        <span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">hours_to_months</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                    <span class="p">]</span>
+                <span class="k">elif</span> <span class="s2">&quot;year&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;y&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                        <span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">hours_to_years</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                    <span class="p">]</span>
+                <span class="n">average</span> <span class="o">=</span> <span class="n">sliced_df</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+            <span class="k">elif</span> <span class="n">n_timeunits</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">total_hours</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">end_hour</span> <span class="o">=</span> <span class="n">total_hours</span>
+                <span class="k">if</span> <span class="s2">&quot;second&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;s&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">start_hour</span> <span class="o">=</span> <span class="n">total_hours</span> <span class="o">+</span> <span class="n">hours_to_seconds</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s2">&quot;minute&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;min&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">start_hour</span> <span class="o">=</span> <span class="n">total_hours</span> <span class="o">+</span> <span class="n">hours_to_minutes</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s2">&quot;hour&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;h&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">start_hour</span> <span class="o">=</span> <span class="n">total_hours</span> <span class="o">+</span> <span class="n">hours_to_hours</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s2">&quot;day&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;d&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">start_hour</span> <span class="o">=</span> <span class="n">total_hours</span> <span class="o">+</span> <span class="n">hours_to_days</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s2">&quot;week&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;w&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">start_hour</span> <span class="o">=</span> <span class="n">total_hours</span> <span class="o">+</span> <span class="n">hours_to_weeks</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s2">&quot;month&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;m&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">start_hour</span> <span class="o">=</span> <span class="n">total_hours</span> <span class="o">+</span> <span class="n">hours_to_months</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s2">&quot;year&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;y&quot;</span> <span class="ow">in</span> <span class="n">data_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                    <span class="n">start_hour</span> <span class="o">=</span> <span class="n">total_hours</span> <span class="o">+</span> <span class="n">hours_to_years</span><span class="p">(</span><span class="n">n_timeunits</span><span class="p">)</span>
+
+                <span class="n">sliced_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">start_hour</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">data_df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">end_hour</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="n">average</span> <span class="o">=</span> <span class="n">sliced_df</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid value for n_timeunits.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">average</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Invalid input provided. Please specify either start_index and end_index or n_rows along with input_matrix.&quot;</span>
+            <span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_extract_time_series_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process time series data from the tpl file.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - None</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - pandas.Series: Time information.</span>
+<span class="sd">            - pandas.DataFrame: DataFrame containing time series variable outputs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">time_series_header</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="s2">&quot;TIME SERIES&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;TIME\sSERIES\s+&#39;\s?\((\w)\)\s*&#39;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                    <span class="n">time_unit</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">time_series_header</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">time_series_header</span><span class="p">:</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">time_unit</span> <span class="o">=</span> <span class="n">time_unit</span>
+            <span class="n">df_outputs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">df_outputs</span> <span class="o">=</span> <span class="n">df_outputs</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">df_outputs</span> <span class="o">=</span> <span class="n">df_outputs</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">)</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="n">df_outputs</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">df_outputs</span> <span class="o">=</span> <span class="n">df_outputs</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">df_outputs</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;variable_output&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_outputs</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">time</span><span class="p">,</span> <span class="n">df_outputs</span><span class="p">,</span> <span class="n">time_unit</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(),</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="tplBatchParser">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.tplBatchParser">[docs]</a>
+<span class="k">class</span> <span class="nc">tplBatchParser</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to handle batches of tpl files</span>
+<span class="sd">    </span>
+<span class="sd">    Functions:</span>
+<span class="sd">        1. extract_trends: to extract trends from a list of tpl files</span>
+<span class="sd">        2. calc_averages: to compute averages of trends extracted from a list of tpl files</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_of_files</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes an instance of the class by loading file data and unit definitions.</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - filepaths (list): a list of the path to the ppl files to be loaded.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            - None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_of_files</span> <span class="o">=</span> <span class="n">list_of_files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">tplParser</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">list_of_files</span><span class="p">]</span>
+
+<div class="viewcode-block" id="tplBatchParser.extract_trends">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.tplBatchParser.extract_trends">[docs]</a>
+    <span class="k">def</span> <span class="nf">extract_trends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_matrix</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to extract trends from a batch of tpl files</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            - Input_matrix (csv): The matrix containing variable names, branch names, and pipe names. This is a required argument</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">            - pandas.DataFrame: DataFrame containing extracted trends from tpl files</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># create suffixes for distinguishing between columns</span>
+        <span class="n">suffixes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">))</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_of_files</span><span class="p">]</span>
+        <span class="n">list_of_dfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">file</span><span class="o">.</span><span class="n">extract_trend</span><span class="p">(</span><span class="n">input_matrix</span><span class="p">)</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">]</span>
+        <span class="c1"># attaching suffixes to dataframes</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_of_dfs</span><span class="p">)):</span>
+            <span class="n">list_of_dfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">list_of_dfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add_suffix</span><span class="p">(</span><span class="n">suffixes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="c1"># merging final dataframe</span>
+        <span class="n">final_df</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">left_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">),</span>
+            <span class="n">list_of_dfs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">final_df</span></div>
+
+
+<div class="viewcode-block" id="tplBatchParser.calc_averages">
+<a class="viewcode-back" href="../../../pypontem.tpl.html#pypontem.tpl.tplparser.tplBatchParser.calc_averages">[docs]</a>
+    <span class="k">def</span> <span class="nf">calc_averages</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_matrix</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">start_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">end_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_rows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_timeunits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the average of values in the DataFrame up to the specified index or of the last n values.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            - input_matrix (csv): The csv file containing variable names, branch names, and pipe names. This is a required argument</span>
+<span class="sd">            - start_index (int, optional): The starting index from which the average will be calculated. Defaults to None.</span>
+<span class="sd">            - end_index (int, optional): The ending index up to which the average will be calculated. Defaults to None.</span>
+<span class="sd">            - n_rows (int, optional): Number of rows to consider for calculating the average. If provided, start_index and end_index are ignored. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            - pandas.DataFrame: DataFrame containing the calculated averages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">suffixes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file</span><span class="p">))</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_of_files</span><span class="p">]</span>
+        <span class="n">list_of_dfs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">calc_average</span><span class="p">(</span><span class="n">input_matrix</span><span class="p">,</span> <span class="n">start_index</span><span class="p">,</span> <span class="n">end_index</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_timeunits</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">T</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_of_dfs</span><span class="p">)):</span>
+            <span class="n">list_of_dfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">list_of_dfs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add_suffix</span><span class="p">(</span><span class="n">suffixes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="n">final_df</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">left_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;outer&quot;</span><span class="p">),</span>
+            <span class="n">list_of_dfs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">final_df</span> <span class="o">=</span> <span class="n">final_df</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">final_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Average&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">final_df</span></div>
+</div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;parse arguments for obtaining variables from catalog&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;--filepath&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;enter the path to tpl file&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-v&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--varname&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;enter the name of the tpl variable&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-l&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--loc&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;enter the name of the tpl branch&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># to ensure all variable time series output is pulled if no branch is provided</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-p&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--pipe&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;enter the name of the tpl pipe&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># to ensure all variable time series output is pulled if no pipe is provided</span>
+    <span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-is&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--start_index&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;enter the start index to calculate average for trend&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-ie&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--end_index&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;enter the last index to calculate average for trend&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-n&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--n_rows&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;enter the number of rows to calculate average for trend&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-nt&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--n_timeunits&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;enter the number of hours to calculate average for trend&quot;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--csv_file&quot;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the CSV file containing variable names, branch names, and pipe names&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">filepath</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span>
+    <span class="n">tplparser</span> <span class="o">=</span> <span class="n">tplParser</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">filepath</span><span class="p">)</span>
+    <span class="n">input_matrix</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">csv_file</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">tplparser</span><span class="o">.</span><span class="n">extract_trend</span><span class="p">(</span><span class="n">input_matrix</span><span class="p">)</span>
+    <span class="c1"># data1 = tplparser.calc_average(</span>
+    <span class="c1">#     input_matrix=input_matrix, n_timeunits=args.n_timeunits</span>
+    <span class="c1"># )</span>
+    <span class="c1"># data2 = tplparser.search_catalog(var_name=args.varname, pipe_name=args.pipe)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pontem Analytics.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

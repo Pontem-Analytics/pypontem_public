@@ -81,6 +81,7 @@ OLGA_vars:
   QLSTSOUR : VolumetricStandardFlowrate
   QLSTWELL : VolumetricStandardFlowrate
   QWTST : VolumetricStandardFlowrate
+  QT : VolumetricFlowRate
   QLT : VolumetricFlowRate
   QLTWT : VolumetricFlowRate 
   QLTHL : VolumetricFlowRate
@@ -135,6 +136,12 @@ OLGA_vars:
   Z_CUTTING : Unitless
   HOLHL : Unitless
   HOLWT : Unitless
+  CONTR : Unitless
+  MEASVAR : Unitless
+  SETPVAR : Unitless
+  VALVOP : Unitless
+  VALVDP : Unitless
+  GASCFR : Unitless
 
 
 OLGA_startswith:
@@ -144,3 +151,27 @@ OLGA_startswith:
   CQL : VolumetricFlowRate
   CQLTHL : VolumetricFlowRate
   CQLTWT : VolumetricFlowRate
+  XGE_ : Unitless
+  XHE_ : Unitless
+  XWE_ : Unitless
+  XWM_ : Unitless
+  XWME_ : Unitless
+  Z_ : Unitless
+  ZM_ : Unitless
+  CACCGAG_ : Unitless
+  CACCGAQ_ : Unitless
+  CACCOIG_ : Unitless
+  CACCOIQ_ : Unitless
+  CACCWAG_ : Unitless
+  CACCWAQ_ : Unitless
+  CGG_ : Unitless
+  CGHT_ : Unitless
+  CGWT_ : Unitless
+  CQG_ : Unitless
+  CQLTHL_ : Unitless
+  CQLTWT_ : Unitless
+  CMTOT_ : Unitless
+  CGASOUT_ : Unitless
+  CMASOUT_ : Unitless
+  CQLTWT_ : Unitless
+  CMTOT_ : Unitless

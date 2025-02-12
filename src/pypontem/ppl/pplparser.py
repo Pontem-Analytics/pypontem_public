@@ -93,8 +93,8 @@ class pplParser:
         4.parse_number_of_variables: to extract the number of variables present in a ppl file
         5. extract_catalog: to extract 
         6. search_catalog: to extract the information from the catalog of the variable specified
-        7. extract_profiles: to extract profiles in a ppl file
-        8. extract_trend_join_nodes: to join nodes of branches extracted in a ppl file	
+        7. extract_profile: to extract profiles in a ppl file
+        8. extract_profile_join_nodes: to join nodes of branches extracted in a ppl file	
     """
 
     def __init__(self, filepath):
@@ -564,6 +564,11 @@ class pplParser:
             unit = unit.to_string(index=False)
             var = var_name
             unit_class = self.unitsdb["OLGA_vars"].get(var)
+            if unit_class == None:
+                for k, v in self.unitsdb["OLGA_startswith"].items():
+                    if str(var).startswith(k):
+                        unit_class = v
+
             converted_vals = []
             cols = final_df.columns
             #Converting time values from the trend column names
@@ -594,11 +599,10 @@ class pplParser:
             final_df.columns = updated_column_vals
             # Filter based on time range
             # Extract numeric time values from column names
-            time_numeric = final_df.columns.str.extract(r'([-+]?\d*\.\d+|\d+)', expand=False).astype(float)
-
+            time_numeric = final_df.columns.str.extract(r'time_in_'+ out_time_unit + r'[_:]*([+-]?\d*\.\d+|\d+)', expand=False).astype(float)
             # Convert to a Series to use .between()
             time_values_series = pd.Series(time_numeric.values.flatten(), index=final_df.columns)
-
+            
             # Checking if start_time and end_time are specified
             if pd.notna(start_time) and pd.notna(end_time):
                 if start_time > end_time:
@@ -621,7 +625,7 @@ class pplParser:
                     value = float(row[column_name])
                     if pd.isna(out_unit):
                         out_unit = unit
-
+                        
                     value_tagged = getattr(UnitConversion, unit_class)(value, unit)
                     conv_val = value_tagged.convert(to_unit=out_unit)
                     converted_vals.append(round(conv_val, 3))
@@ -964,15 +968,15 @@ if __name__ == "__main__":
         # trends = pplbatchparser.extract_trends(input_matrix)
         # nodes = pplbatchparser.Join_batch_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
         # # print(trends)
-        branch_matrix = pd.read_csv(args.branch_csv_file)
+        # branch_matrix = pd.read_csv(args.branch_csv_file)
         pplparser = pplParser(args.filepath)
         # time_series = pplparser._extract_time_series_data()
         # catalog = pplparser._extract_catalog()
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
-        # trends = pplparser.extract_profile(input_matrix= input_matrix)
-        nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
-        print(nodes)
+        trends = pplparser.extract_profile(input_matrix= input_matrix)
+        # nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
+        print(trends.head(2))
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)
     # results.print_stats(20)

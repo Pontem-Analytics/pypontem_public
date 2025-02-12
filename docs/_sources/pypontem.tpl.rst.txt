@@ -1,0 +1,29 @@
+pypontem.tpl package
+====================
+
+Submodules
+----------
+
+pypontem.tpl.tplparser module
+-----------------------------
+
+.. automodule:: pypontem.tpl.tplparser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. pypontem.tpl.xlwings\_parser module
+.. -----------------------------------
+
+.. .. automodule:: pypontem.tpl.xlwings_parser
+..    :members:
+..    :undoc-members:
+..    :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pypontem.tpl
+   :members:
+   :undoc-members:
+   :show-inheritance:

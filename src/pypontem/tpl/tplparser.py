@@ -89,7 +89,7 @@ class tplParser:
         4. parse_number_of_variables: to extract the number of variables present in a tpl file
         5. extract_catalog: to extract the catalog information from a tpl file
         6. search_catalog: to extract the information from the catalog of the variable specified
-        7. extract_trends: to extract trends in a tpl file
+        7. extract_trend: to extract trends in a tpl file
         8. calc_average: to compute the average of trends extracted in a tpl file	
     """
 
