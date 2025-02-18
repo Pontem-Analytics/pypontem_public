@@ -69,7 +69,7 @@ We welcome contributions! Follow these steps to contribute:
 - **Pontem Analytics**
 
 ## Further Resources
-- 📚 **[Official Documentation](http://www.pypontem.pontemanalytics.com/)** – Learn how to use pypontem effectively.
+- 📚 **[Official Documentation](https://pypontem.pontemanalytics.com/)** – Learn how to use pypontem effectively.
 - 💻 **[GitHub Repository](https://github.com/Pontem-Analytics/pypontem_public)** – Explore the source code, contribute, or report issues.
 
 ## License
