@@ -55,7 +55,7 @@ metadata = tpl.metadata
 print(metadata)
 ```
 
-For a detailed walkthrough, check the **[official documentation](http://www.pypontem.pontemanalytics.com/)**.
+For a detailed walkthrough, check the **[official documentation](https://pypontem.pontemanalytics.com/)**.
 
 ## Contributing
 We welcome contributions! Follow these steps to contribute:
