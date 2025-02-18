@@ -18,6 +18,7 @@ lib/
 lib64/
 parts/
 sdist/
+notebooks/data/
 var/
 *.egg-info/
 .installed.cfg
