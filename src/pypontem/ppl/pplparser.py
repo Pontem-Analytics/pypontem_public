@@ -53,32 +53,46 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.max_colwidth", None)
 
 
-def search(df, var_name=None, loc_name=None, pipe_name=None):
-    r"""
-    Searches for variables containing a keyword in their names within a DataFrame.
-        Args:
-            df (pandas.DataFrame): The DataFrame to search within.
-            keyword (str): The keyword to search for.
+def search(df, var_name=None, **locator_types):
+    """
+    Searches for variables in the DataFrame based on variable names, dynamically detected locator types, 
+    and additional filtering conditions (pipe_name, pipe_number, wall_layer) when necessary.
 
-        Returns:
-            None
+    Args:
+        df (pandas.DataFrame): The DataFrame to search within.
+        var_name (str): Variable name.
+        **locator_types (dict): Arbitrary keyword arguments for locator columns (e.g., Choke="Choke_1", Position="POS_1").
+    
+    Returns:
+        pandas.DataFrame: Filtered DataFrame based on search criteria.
     """
     filter_conditions = []
+
     if var_name:
-        var_name = var_name.upper()
-        filter_conditions.append(df["Name"] == var_name)
-    if loc_name:
-        loc_name = loc_name.upper()
-        filter_conditions.append(df["Locator Name"] == loc_name)
-    if pipe_name:
-        pipe_name = pipe_name.upper()
-        filter_conditions.append(
-            df["Pipe Name"].str.contains(pipe_name, na=False, case=False)
-        )
-    if len(filter_conditions) > 1:
+        filter_conditions.append(df["varname"].str.upper() == var_name.upper())
+    for col, value in locator_types.items():
+        if col in df.columns and value and value != "None":
+            filter_conditions.append(df[col].str.upper() == value.upper())
+    if filter_conditions:
         result_df = df[reduce(lambda x, y: x & y, filter_conditions)]
     else:
-        result_df = df[filter_conditions[0]]
+        result_df = df 
+
+    if len(result_df) > 1:
+        additional_filters = [col for col in result_df.columns if col not in locator_types and col != "varname" and col !="Locator Type" and col != "out_unit" and col != "Description"]
+        if additional_filters:
+            raise ValueError(
+                f"Multiple results found for variable '{var_name}'. "
+                f"Consider adding one of the following filters to refine the search: {additional_filters}"
+            )
+        else:
+            raise ValueError(
+                f"Multiple results found for variable '{var_name}', but no additional filtering columns are available."
+            )
+
+    if result_df.empty:
+        raise ValueError(f"No matching data found for variable '{var_name}' with the specified locator filters.")
+
     return result_df
 
 
@@ -308,79 +322,82 @@ class pplParser:
     def _extract_catalog(self):
         pattern = re.compile(
             r"""
-            (?P<name>\S+)                      # variable name
-            \s+'(?P<locator_type>[^']*)'       # locator type
-            (\s+'(?P<locator_name>[^']*)')?    # locator name (optional)
-            (\s+'(?P<branch>[^']*)')?          # branch (optional)
-            (\s+'(?P<pipe>[^']*)')?            # pipe (optional)
-            (\s+'(?P<pipe_name>[^']*)')?       # pipe name (optional)
-            (\s+'(?P<pipe_nr>[^']*)')?         # pipe nr (optional)
-            (\s+'(?P<pipe_number>[^']*)')?     # pipe number (optional)
-            \s+'(?P<unit>[^']*)'               # unit
-            \s+'(?P<description>[^']*)'        # description
+            (?P<varname>\S+)        # Variable name (A, B, C, etc.)
+            \s+'(?P<location>[^']*)'
+            \s*'(?P<locator_type>[^']*)'?  # CHOKE:, NODE:, BRANCH:
+            \s*'(?P<locname>[^']*)'? # extracting the location names
+            (?P<extras>(\s*'[^']*')*)?  # Capture all additional optional fields dynamically
+            \s*'(?P<unit>[^']*)'     # Unit (e.g., (PA), (-), (C))
+            \s*'(?P<description>[^']*)'  # Description
             """,
-            re.IGNORECASE | re.VERBOSE,
+            re.VERBOSE,
         )
-        
-        
+    
         lines = self.content.splitlines()
-        catalog_index = next(
-            (
-                i + 1
-                for i, line in enumerate(lines)
-                if line.strip() == "CATALOG"
-                and i + 1 < len(lines)
-                and lines[i + 1].strip().isdigit()
-            ),
-            None,
-        )
-        # Extract variable information from the lines after the "CATALOG" line
-        matches = pattern.finditer("\n".join(lines[catalog_index:]))
         data_list = []
-        # Iterate over matches and extract data
-        for match in matches:
-            locator_name = match.group("locator_name") or None
-            if locator_name == "BRANCH:":
-                locator_name = match.group("branch") or None
-            data_list.append(
-                {
-                    "Name": match.group("name"),
-                    "Locator Type": match.group("locator_type") or None,
-                    "Locator Name": locator_name,
-                    # "Branch": match.group("branch") or None,
-                    #"Pipe": match.group("pipe") or None,
-                    "Pipe Name": match.group("pipe_name") or None,
-                    #"Pipe Nr": match.group("pipe_nr") or None,
-                    "Pipe Number": match.group("pipe_number") or None,
-                    "Unit": match.group("unit") or None,
-                    "Description": match.group("description") or None,
+    
+        for line in lines:
+            match = pattern.match(line)
+            if match:
+                data_entry = {
+                    "varname": match.group("varname"),
+                    "Locator Type":match.group("location"),
+                    "out_unit": match.group("unit"),
+                    "Description": match.group("description")
                 }
-            )
 
+                # Capture and process locator types
+                locator_type = match.group("locator_type")
+                if locator_type:
+                    locname = match.group("locname")
+                    data_entry[locator_type] = locname  # Create a column with locator type value
+                
+                extras = match.group("extras").strip().split("' '") if match.group("extras") else []
+                last_key = None
+                
+                for extra in extras:
+                    extra = extra.strip("'")
+                    if extra.endswith(":"):
+                        last_key = extra.strip(":")
+                        data_entry.setdefault(last_key, [])  # Initialize column as list
+                    elif last_key:
+                        data_entry[last_key].append(extra)
+                        last_key = None  # Reset for next key-value pair
+                
+                # Convert list values to single values if only one item exists
+                for key in data_entry:
+                    if isinstance(data_entry[key], list) and len(data_entry[key]) == 1:
+                        data_entry[key] = data_entry[key][0]
+                
+                data_list.append(data_entry)
+    
+        # Convert to DataFrame
         df = pd.DataFrame(data_list)
-        # df = df.drop(columns=["Pipe Nr"])
-        # df = df.drop(columns=["Pipe"])
-        # df = df.drop(columns=["Branch"])
+        df.columns = [col.replace(":", "") for col in df.columns]
+        final_columns = ["varname"] + [col for col in df.columns if col not in ["varname", "out_unit", "Description"]] + ["out_unit", "Description"]
+        df = df[final_columns]
         return df
     
-    def search_catalog(self, var_name=None, loc_name=None, pipe_name=None):
-        """
-        Searches for variables containing a keyword in their names within a DataFrame.
-        
-        Arguments:
-	        - Var_name (str): The variable name
-	        - Loc_name (str): The location of the variable you want to search for
-	        - Pipe_name (str): the pipe name of the variable name specified located at the location
-        
-        Returns:
-            - pandas.DataFrame: a dataframe containing catalog information of the variable specified at the location and pipe name provided.
-
-        """
-        cat = self.catalog
-        result_df = search(cat, var_name, loc_name, pipe_name)
-        if result_df.empty:
-            raise ValueError(f"We don't have {var_name} in our catalog.")
-        return result_df
+    def search_catalog(self, var_name=None, **locators):
+            """
+            Searches for variables containing a keyword in their names within a DataFrame.
+            
+            Arguments:
+                - Var_name (str): The variable name
+                - Loc_name (str): The location of the variable you want to search for
+                - Pipe_name (str): the pipe name of the variable name specified located at the location name provided.
+            
+            Returns:
+                - Pandas.DataFrame: a dataframe containing catalog information of the variables specified.
+    
+            """
+            cat = self._extract_catalog()
+            locators = {key.replace("_", " "): value for key, value in locators.items()}
+            result_df = search(cat, var_name, **locators)
+            if result_df.empty:
+                raise ValueError(f"We don't have {var_name} in our catalog.")
+            result_df = result_df.dropna(axis=1, how='all')
+            return result_df
     
     def _extract_time_series_data(self):
         """
@@ -414,13 +431,24 @@ class pplParser:
         else:
             raise ValueError("TIME SERIES section not found")
         content = self._extract_catalog()
-        variable_Names = content["Name"].reset_index(drop=True)
-        # variable_Names.reset_index(drop=True)
-        branch_names = content["Locator Name"].reset_index(drop=True)
-        # branch_names.reset_index(drop=True)
-        units = content["Unit"].reset_index(drop=True)
-        # units.reset_index(drop=True)
-        # Process the extracted time series data
+        variable_Names = content["varname"].reset_index(drop=True)
+        # branch_names = content["BRANCH"].reset_index(drop=True)
+        # branch_names = [col for col in content.columns if col not in ["varname", "out_unit","Description","Locator Type"]]
+        excluded_columns = {"varname", "out_unit", "Description", "Locator Type"}
+
+        # Identify the branch column dynamically
+        branch_col = next(
+            (col for col in content.columns if col not in excluded_columns),
+            None
+        )
+        # Ensure a valid branch column is found
+        if branch_col:
+            branch_names = content[branch_col].reset_index(drop=True)  # Keep index clean
+            # print("Detected branch column:", branch_col)
+        else:
+            raise ValueError("Branch column not found")
+            
+        units = content["out_unit"].reset_index(drop=True)
         lines = time_series_data.split('\n')
         time_dict = {}
 
@@ -447,7 +475,6 @@ class pplParser:
             for row in values_out[idx]:
                 data.append(row)
 
-         # print(data)
         # Checking that the number of columns matches the number of data points
         expected_columns = len(variable_Names) * len(time_out)
         if len(columns) != expected_columns:
@@ -475,10 +502,7 @@ class pplParser:
         df_final = pd.DataFrame(transposed_data, columns=columns)
         return df_final
 
-    def extract_profile(
-            self, 
-            input_matrix: pd.DataFrame 
-            ):
+    def extract_profile(self, input_matrix: pd.DataFrame):
         """
         Extracts and processes profile data from an input matrix, performing unit conversions and time filtering.
         
@@ -489,97 +513,107 @@ class pplParser:
             - pandas.DataFrame: A combined DataFrame containing the processed trend data with converted units and filtered time ranges.
         """
 
-        # calling the output of catalog, profiles, metadata and time series methods
+        # Extract metadata and profile-related information
         catalog = self._extract_catalog()
         profiles = self.branch_profiles
         metadata = self.metadata
-        profile_unit = metadata['geometry']
+        profile_unit = metadata["geometry"]
         profile_unit_cleaned = profile_unit.str.lower()
         time_series = self._extract_time_series_data()
-        df_catalog = catalog.filter(items=['Name','Locator Type','Locator Name','Unit'])
-        df = pd.concat(profiles.values(), keys=profiles.keys()).reset_index(level=0).rename(columns={'level_0': 'Category'})
-        df.drop(columns=['Elevations_(m)'], inplace=True)
-        data_file = input_matrix
-        data_file = data_file.dropna(how="all")
-        variable_names = data_file['varname'].to_list()
-        trend_df =[]
-        for index, row in data_file.iterrows():
+
+        df_catalog = catalog.drop(columns=["Description"])
+        df = pd.concat(profiles.values(), keys=profiles.keys()).reset_index(level=0).rename(columns={"level_0": "Category"})
+        df.drop(columns=["Elevations_(m)"], inplace=True)
+
+        input_matrix = input_matrix.dropna(how="all")
+        variable_names = input_matrix["varname"].to_list()
+        trend_df = []
+
+        for index, row in input_matrix.iterrows():
             var_name = row["varname"]
-            if type(var_name) != str:
-                raise ValueError(
-                    "No variable name specified in row {}".format(index + 1)
-                )
-            branch_name = row["branchname"]
+            if not isinstance(var_name, str):
+                raise ValueError(f"No variable name specified in row {index + 1}")
+
             out_unit = row["out_unit"]
             out_unit_profile = row["out_unit_profile"]
             out_time_unit = row["time_unit"]
             start_time = row["start_time"]
             end_time = row["end_time"]
-            data = time_series.filter(regex=f'^{branch_name}_{var_name}_')
-            match = df_catalog[(df_catalog['Name'] == var_name) & (df_catalog['Locator Name'] == branch_name)]
+
+            # Collecting all locators dynamically
+            locators = {col: row[col] for col in input_matrix.columns if col not in ["varname", "out_unit", "out_unit_profile", "time_unit", "start_time", "end_time"]}
+            locators = {key: value for key, value in locators.items() if pd.notna(value)}
+
+            if not locators:
+                raise ValueError(f"No locator specified for variable '{var_name}' in row {index + 1}")
+
+            # search_pattern = f'^{var_name}_'
+            for key, value in locators.items():
+                search_pattern = f'^{value}_{var_name}_'
+
+            # Filter time series data using the dynamically constructed regex
+            data = time_series.filter(regex=search_pattern)
+            
+            # Create a matching condition for the catalog based on the locators
+            match_condition = (df_catalog["varname"] == var_name)
+
+            # Dynamically add conditions for each locator column specified by the user
+            for locator_column, locator_value in locators.items():
+                match_condition &= (df_catalog[locator_column] == locator_value)
+
+            # Find the matching row in the catalog
+            match = df_catalog[match_condition]
+
             match.reset_index(drop=True, inplace=True)
-            unit = match['Unit']
-            unit_cleaned = unit.str.extract(r'\((.*?)\)', expand=False).str.lower()
+            # search_args = {"var_name": var_name, **locators}
             if not match.empty:
-                location =  match['Locator Type'].values[0]
+                location = match["Locator Type"].values[0]
             else:
-                location = None
-            columns = []
-            data1 = []
+                raise ValueError(f"Branch '{locator_value}' not found in the catalog.")
 
-            if location is not None:
-                pipe_data = df[df['Category'] == branch_name]
-                columns.append(branch_name)
-                if location == "BOUNDARY:":
-                    data1.extend(pipe_data['Lengths_(m)'].tolist())
-                    result = pd.DataFrame(data1, columns=['Profiles'])
-                else:
-                    data1.extend(pipe_data['Lengths_(m)'].tolist())
-                    result_list = [(data1[i] + data1[i + 1]) / 2 for i in range(len(data1) - 1)]
-                    result = pd.DataFrame(result_list, columns=['Profiles'])   
+            # Profile extraction
+            # all_profiles = {}
+            # for locator_column, locator_value in locators.items():
+            pipe_data = df[df["Category"] == locator_value]
+            profiles_data = pipe_data["Lengths_(m)"].tolist()
+            if location == "BOUNDARY:":
+                result = pd.DataFrame(profiles_data, columns=["Profiles"])
             else:
-                raise ValueError (f"Branch(es) given in the input matrix are not available in the catalog, double check your Branch inputs")
-                
-            
-        # Converting Profiles values using unit conversion class       
+                result = pd.DataFrame([(profiles_data[i] + profiles_data[i + 1]) / 2 for i in range(len(profiles_data) - 1)], columns=["Profiles"])
+            #     all_profiles[locator_column] = results
+            # result = pd.concat(all_profiles) if all_profiles else pd.DataFrame()    
+            # Converting Profiles values using UnitConversion
             con_vals = []
-            for i in result['Profiles']:
-                unit = profile_unit_cleaned
-                unit = unit.to_string(index=False)
-                if pd.isna(out_unit_profile):
-                    out_unit_profile = unit
+            unit = profile_unit_cleaned.to_string(index=False)
+           
+            if pd.isna(out_unit_profile):
+                out_unit_profile = unit
 
-                value = i
-                value = float(value)
-            
-                value_tagged = getattr(UnitConversion, "Length")(value, unit)
-                conv_val = value_tagged.convert(to_unit=out_unit_profile)
-                con_vals.append(round(conv_val, 3))
-            col_name = f"Profiles_{branch_name}_{var_name}_{out_unit_profile}"
+            for value in result["Profiles"]:
+                value_tagged = getattr(UnitConversion, "Length")(float(value), unit)
+                con_vals.append(round(value_tagged.convert(to_unit=out_unit_profile), 3))
+
+            col_name = f"Profiles_{locator_value}_{var_name}_{out_unit_profile}"
             result1 = pd.DataFrame(con_vals, columns=[col_name])
-            # End of converting profiles values
-            # Starting to prep and convert trend and time values
+            
+            # Process trend and time values
             final_df = data.dropna()
-            unit = unit_cleaned
-            unit = unit.to_string(index=False)
-            var = var_name
-            unit_class = self.unitsdb["OLGA_vars"].get(var)
-            if unit_class == None:
+            unit = match["out_unit"].str.extract(r"\((.*?)\)", expand=False).str.lower().to_string(index=False)
+            unit_class = self.unitsdb["OLGA_vars"].get(var_name)
+            if unit_class is None:
                 for k, v in self.unitsdb["OLGA_startswith"].items():
-                    if str(var).startswith(k):
+                    if str(var_name).startswith(k):
                         unit_class = v
 
             converted_vals = []
-            cols = final_df.columns
-            #Converting time values from the trend column names
-            time_vals = []
-            updated_column_vals =[]
-            for column in cols:
+            updated_column_vals = []
+            for column in final_df.columns:
                 time_values = re.findall(r"[-+]?\d*\.\d+e[-+]?\d+|[-+]?\d+\.\d+", column)
                 for val in time_values:
                     values = float(val)
                     time_unit_match = re.search(r"in_(\w+):", column)
                     time_unit_init = time_unit_match.group(1)
+
                     if time_unit_init in unit_map:
                         time_unit = unit_map[time_unit_init]
 
@@ -587,69 +621,59 @@ class pplParser:
                         out_time_unit = time_unit
 
                     value_tagged = getattr(UnitConversion, "Time")(values, time_unit)
-                    conv_val = value_tagged.convert(to_unit=out_time_unit)
-                    time_vals.append(round(conv_val, 3))
-                    for time_val in time_vals:
-                        updated_text = column.replace(val, f"{time_val}")
-                        # updated_text1 = updated_text.replace(time_unit_init, out_time_unit)
-                        updated_text1 = re.sub(r'(_in_)' + time_unit_init + r'(:)', r'\1' + out_time_unit + r'\2', updated_text)
+                    converted_time = round(value_tagged.convert(to_unit=out_time_unit), 3)
 
-                    updated_column_vals.append(updated_text1)
-            # Update the column names with the converted time values
+                    updated_text = column.replace(val, str(converted_time))
+                    updated_text = re.sub(r"(_in_)" + time_unit_init + r"(:)", r"\1" + out_time_unit + r"\2", updated_text)
+                    updated_column_vals.append(updated_text)
+
             final_df.columns = updated_column_vals
-            # Filter based on time range
-            # Extract numeric time values from column names
-            time_numeric = final_df.columns.str.extract(r'time_in_'+ out_time_unit + r'[_:]*([+-]?\d*\.\d+|\d+)', expand=False).astype(float)
-            # Convert to a Series to use .between()
-            time_values_series = pd.Series(time_numeric.values.flatten(), index=final_df.columns)
             
-            # Checking if start_time and end_time are specified
+            # Filtering based on time range
+            time_numeric = final_df.columns.str.extract(r"time_in_" + out_time_unit + r"[_:]*([+-]?\d*\.\d+|\d+)", expand=False).astype(float)
+            time_values_series = pd.Series(time_numeric.values.flatten(), index=final_df.columns)
+
             if pd.notna(start_time) and pd.notna(end_time):
                 if start_time > end_time:
-                    raise ValueError(f"The start time cannot be greater than the end time. Please ensure the time range is valid and try again")
-                else:
-                    valid_time_mask = time_values_series.between(start_time, end_time)
-                    filtered_columns = final_df.columns[valid_time_mask]
+                    raise ValueError("Start time cannot be greater than end time.")
+                filtered_columns = final_df.columns[time_values_series.between(start_time, end_time)]
             elif pd.notna(end_time):
-                raise ValueError(f"The start time is not specified. Please provide a valid start time to proceed")
+                raise ValueError("Start time is not specified.")
             elif pd.notna(start_time):
-                raise ValueError(f"The end time is not specified. Please provide a valid end time to proceed")
+                raise ValueError("End time is not specified.")
             else:
                 filtered_columns = final_df.columns
 
             filtered_df = final_df[filtered_columns]
-            column_names = filtered_df.columns
-            # Convert values in the filtered DataFrame
+            # print(filtered_df)
+            # Convert trend values
             for _, row in filtered_df.iterrows():
                 for column_name in filtered_df.columns:
                     value = float(row[column_name])
                     if pd.isna(out_unit):
                         out_unit = unit
-                        
-                    value_tagged = getattr(UnitConversion, unit_class)(value, unit)
-                    conv_val = value_tagged.convert(to_unit=out_unit)
-                    converted_vals.append(round(conv_val, 3))
-            reshaped_values = [converted_vals[i:i + len(column_names)] for i in range(0, len(converted_vals), len(column_names))]
-            # Create a DataFrame from the reshaped list
-            structured_df = pd.DataFrame(reshaped_values, columns=column_names)
-            # Define a function to update the part within brackets
-            def update_brackets(column_name, new_value):
-                # Use regular expression to replace the part within brackets
-                updated_name = re.sub(r'\(.*\)', f'({new_value})', column_name)
-                return updated_name
-            # Apply the function to each column name
-            new_column_names = [update_brackets(cola, out_unit) for cola in structured_df.columns]
-            # Assign the new column names to the DataFrame
-            structured_df.columns = new_column_names
-            trends = pd.concat([result1, structured_df], axis=1)
-            trends.set_index(col_name)
-            trend_df.append(trends)
 
+                    value_tagged = getattr(UnitConversion, unit_class)(value, unit)
+                    converted_vals.append(round(value_tagged.convert(to_unit=out_unit), 3))
+
+            reshaped_values = [converted_vals[i:i + len(filtered_df.columns)] for i in range(0, len(converted_vals), len(filtered_df.columns))]
+            structured_df = pd.DataFrame(reshaped_values, columns=filtered_df.columns)
+
+            def update_brackets(column_name, new_value):
+                return re.sub(r"\(.*\)", f"({new_value})", column_name)
+
+            structured_df.columns = [update_brackets(col, out_unit) for col in structured_df.columns]
+
+            trends = pd.concat([result1, structured_df], axis=1)
+            # trends.set_index(col_name, inplace=True)
+            trend_df.append(trends)
         combined_df = pd.concat(trend_df, axis=1, keys=variable_names, ignore_index=False)
-        # Sort each column to push NaNs to the bottom
+        # combined_df.reset_index(inplace=True) 
+        # print(combined_df.columns)
+        # Sorting NaN values to the bottom
         for col in combined_df.columns:
             combined_df[col] = combined_df[col].dropna().tolist() + [np.nan] * combined_df[col].isna().sum()
-        # combined_df.to_csv('combined_df1.csv', index=True)
+        
         return combined_df
         
 
@@ -671,7 +695,7 @@ class pplParser:
 
         data_df = self.extract_profile(input_matrix) 
         catalog = self._extract_catalog()
-        df_catalog = catalog.filter(items=['Name','Locator Type','Locator Name'])
+        df_catalog = catalog.drop(columns=['Description'])
         branch_profiles = self.branch_profiles
         result = {}
         for section, df in branch_profiles.items():
@@ -684,9 +708,16 @@ class pplParser:
 
         branch_matrix['branch_in'] = branch_matrix['branch_in'].str.strip().str.upper()
         branch_matrix['branch_out'] = branch_matrix['branch_out'].str.strip().str.upper()
-        input_branches = input_matrix['branchname'].str.strip().str.upper()
-        catalog_branches = set(df_catalog['Locator Name'].str.strip().str.upper())
-
+        locators = {
+        col: input_matrix[col].astype(str).str.strip().str.upper()
+        for col in input_matrix.columns
+        if col not in ["varname", "out_unit", "out_unit_profile", "time_unit", "start_time", "end_time"]
+        }
+        
+        for key, value in locators.items():
+            input_branches = value.str.strip().str.upper()
+        catalog_branches = set(df_catalog[key].str.strip().str.upper())
+        
         # Check for branches in the branch_matrix that are not in the catalog or input matrix
         for branch in branch_matrix['branch_in'].unique():
             if branch not in catalog_branches:
@@ -707,12 +738,19 @@ class pplParser:
         num = num_of_pipes.values.flatten()
         df_boundary = []
         df_section = []
+        excluded_columns = {'varname', 'out_unit', 'Locator Type', 'Description'}
+
+# Get all columns to be used as locators dynamically
+        locator_columns = [col for col in df_catalog.columns if col not in excluded_columns]
         for index, row in data.iterrows():
             branch_in = row['branch_in']
             branch_out = row['branch_out'] 
             variable_names = data_file['varname'].unique()
+
+
             for v in variable_names:
-                match = df_catalog[(df_catalog['Name'] == v) & (df_catalog['Locator Name'] == branch_in) | (df_catalog['Name'] == v) & (df_catalog['Locator Name'] == branch_out)]
+
+                match = df_catalog[(df_catalog['varname'] == v) & (df_catalog[locator_columns] == branch_in) | (df_catalog['varname'] == v) & (df_catalog[locator_columns] == branch_out)]
                 match.reset_index(drop=True, inplace=True)
 
                 if match.empty:
@@ -962,7 +1000,7 @@ if __name__ == "__main__":
         args.filepath = args.filepath.replace("\\", "/")
         #args.filepath = [fp.replace("\\", "/") for fp in args.filepath]
 
-        input_matrix = pd.read_csv(args.csv_file)
+        # input_matrix = pd.read_csv(args.csv_file)
         # branch_matrix = pd.read_csv(args.branch_csv_file)
         # pplbatchparser = pplBatchParser(args.filepath)
         # trends = pplbatchparser.extract_trends(input_matrix)
@@ -972,11 +1010,12 @@ if __name__ == "__main__":
         pplparser = pplParser(args.filepath)
         # time_series = pplparser._extract_time_series_data()
         # catalog = pplparser._extract_catalog()
+        catalog = pplparser.search_catalog(var_name="PT")
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
-        trends = pplparser.extract_profile(input_matrix= input_matrix)
+        # trends = pplparser.extract_profile(input_matrix= input_matrix)
         # nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
-        print(trends.head(2))
+        print(catalog)
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)
     # results.print_stats(20)

@@ -147,6 +147,7 @@ BRANCH
 -1.8897600000000000e+003 
 CATALOG 
 140
+SVM 'CHOKE:' 'CHOKEPLP'
 QLST 'BOUNDARY:' 'BRANCH:' 'JUMPER-1' 'PIPE:' 'PIPE-1' 'NR:' '1'  '(SM3/S)' 'Liquid volume flow at standard conditions'
 QOST 'BOUNDARY:' 'BRANCH:' 'JUMPER-1' 'PIPE:' 'PIPE-1' 'NR:' '1'  '(SM3/S)' 'Oil volume flow at standard conditions'
 QWST 'BOUNDARY:' 'BRANCH:' 'JUMPER-1' 'PIPE:' 'PIPE-1' 'NR:' '1'  '(SM3/S)' 'Water volume flow at standard conditions'

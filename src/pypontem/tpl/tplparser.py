@@ -49,32 +49,46 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.max_colwidth", None)
 
 
-def search(df, var_name=None, loc_name=None, pipe_name=None):
-    r"""
-    Searches for variables containing a keyword in their names within a DataFrame.
-        Args:
-            df (pandas.DataFrame): The DataFrame to search within.
-            keyword (str): The keyword to search for.
+def search(df, var_name=None, **locator_types):
+    """
+    Searches for variables in the DataFrame based on variable names, dynamically detected locator types, 
+    and additional filtering conditions (pipe_name, pipe_number, wall_layer) when necessary.
 
-        Returns:
-            None
+    Args:
+        df (pandas.DataFrame): The DataFrame to search within.
+        var_name (str): Variable name.
+        **locator_types (dict): Arbitrary keyword arguments for locator columns (e.g., Choke="Choke_1", Position="POS_1").
+    
+    Returns:
+        pandas.DataFrame: Filtered DataFrame based on search criteria.
     """
     filter_conditions = []
+
     if var_name:
-        var_name = var_name.upper()
-        filter_conditions.append(df["varname"] == var_name)
-    if loc_name:
-        loc_name = loc_name.upper()
-        filter_conditions.append(df["locname"] == loc_name)
-    if pipe_name:
-        pipe_name = pipe_name.upper()
-        filter_conditions.append(
-            df["pipename"].str.contains(pipe_name, na=False, case=False)
-        )
-    if len(filter_conditions) > 1:
+        filter_conditions.append(df["varname"].str.upper() == var_name.upper())
+    for col, value in locator_types.items():
+        if col in df.columns and value and value != "None":
+            filter_conditions.append(df[col].str.upper() == value.upper())
+    if filter_conditions:
         result_df = df[reduce(lambda x, y: x & y, filter_conditions)]
     else:
-        result_df = df[filter_conditions[0]]
+        result_df = df 
+
+    if len(result_df) > 1:
+        additional_filters = [col for col in result_df.columns if col not in locator_types and col != "varname" and col != "out_unit" and col != "Description"]
+        if additional_filters:
+            raise ValueError(
+                f"Multiple results found for variable '{var_name}'. "
+                f"Consider adding one of the following filters to refine the search: {additional_filters}"
+            )
+        else:
+            raise ValueError(
+                f"Multiple results found for variable '{var_name}', but no additional filtering columns are available."
+            )
+
+    if result_df.empty:
+        raise ValueError(f"No matching data found for variable '{var_name}' with the specified locator filters.")
+
     return result_df
 
 
@@ -306,196 +320,172 @@ class tplParser:
     def _extract_catalog(self):
         pattern = re.compile(
             r"""
-            (?P<name>\S+)                      # variable name
-            \s+'(?P<locator_type>[^']*)'       # locator type
-            (\s+'(?P<locator_name>[^']*)')?    # locator name (optional)
-            (\s+'(?P<branch>[^']*)')?          # branch (optional)
-            (\s+'(?P<pipe>[^']*)')?            # pipe (optional)
-            (\s+'(?P<pipe_name>[^']*)')?       # pipe name (optional)
-            (\s+'(?P<pipe_nr>[^']*)')?         # pipe nr (optional)
-            (\s+'(?P<pipe_number>[^']*)')?     # pipe number (optional)
-            \s+'(?P<unit>[^']*)'               # unit
-            \s+'(?P<description>[^']*)'        # description
+            (?P<varname>\S+)        # Variable name (A, B, C, etc.)
+            \s*(?:'BOUNDARY:'|'SECTION:')?
+            \s*'(?P<locator_type>[^']*)'?  # CHOKE:, NODE:, BRANCH:
+            \s*'(?P<locname>[^']*)'? # extracting the location names
+            (?P<extras>(\s*'[^']*')*)?  # Capture all additional optional fields dynamically
+            \s*'(?P<unit>[^']*)'     # Unit (e.g., (PA), (-), (C))
+            \s*'(?P<description>[^']*)'  # Description
             """,
-            re.IGNORECASE | re.VERBOSE,
+            re.VERBOSE,
         )
+    
         lines = self.content.splitlines()
-        catalog_index = next(
-            (
-                i + 1
-                for i, line in enumerate(lines)
-                if line.strip() == "CATALOG"
-                and i + 1 < len(lines)
-                and lines[i + 1].strip().isdigit()
-            ),
-            None,
-        )
-        # Extract variable information from the lines after the "CATALOG" line
-        matches = pattern.finditer("\n".join(lines[catalog_index:]))
         data_list = []
-        # Iterate over matches and extract data
-        for match in matches:
-            locator_name = match.group("locator_name") or None
-            if locator_name == "BRANCH:":
-                locator_name = match.group("branch") or None
-
-            out_unit = match.group("unit") or None
-            # if out_unit:
-            #     out_unit = re.sub(
-            #         r"[\(\)]", "", out_unit
-            #     )  # Remove brackets but keep the content inside
-            #     out_unit = out_unit.replace(
-            #         "/", "_"
-            #     )  # Replace slashes with underscores
-            #     out_unit = out_unit.lower()  # Convert to lowercase
-
-            data_list.append(
-                {
-                    "varname": match.group("name"),
-                    "Locator Type": match.group("locator_type") or None,
-                    "locname": locator_name,
-                    # "Branch": match.group("branch") or None,
-                    # "Pipe": match.group("pipe") or None,
-                    "pipename": match.group("pipe_name") or None,
-                    # "Pipe Nr": match.group("pipe_nr") or None,
-                    # "Pipe Number": match.group("pipe_number") or None,
-                    "out_unit": out_unit,
-                    "Description": match.group("description") or None,
+    
+        for line in lines:
+            match = pattern.match(line)
+            if match:
+                data_entry = {
+                    "varname": match.group("varname"),
+                    "out_unit": match.group("unit"),
+                    "Description": match.group("description")
                 }
-            )
 
+                # Capture and process locator types
+                locator_type = match.group("locator_type")
+                if locator_type:
+                    locname = match.group("locname")
+                    data_entry[locator_type] = locname  # Create a column with locator type value
+                
+                extras = match.group("extras").strip().split("' '") if match.group("extras") else []
+                last_key = None
+                
+                for extra in extras:
+                    extra = extra.strip("'")
+                    if extra.endswith(":"):
+                        last_key = extra.strip(":")
+                        data_entry.setdefault(last_key, [])  # Initialize column as list
+                    elif last_key:
+                        data_entry[last_key].append(extra)
+                        last_key = None  # Reset for next key-value pair
+                
+                # Convert list values to single values if only one item exists
+                for key in data_entry:
+                    if isinstance(data_entry[key], list) and len(data_entry[key]) == 1:
+                        data_entry[key] = data_entry[key][0]
+                
+                data_list.append(data_entry)
+    
+        # Convert to DataFrame
         df = pd.DataFrame(data_list)
-        # df = df_catalog.drop(columns=["Locator Type"])
-        # df = df.drop(columns=["Pipe Nr"])
-        # df = df.drop(columns=["Pipe"])
-        # df = df.drop(columns=["Branch"])
+        df.columns = [col.replace(":", "") for col in df.columns]
+        
+        # Define the final column order (varname, locator_types, extras, out_unit, description)
+        # First column is 'varname', last two are 'out_unit' and 'Description', the rest are dynamic locators and extras.
+        final_columns = ["varname"] + [col for col in df.columns if col not in ["varname", "out_unit", "Description"]] + ["out_unit", "Description"]
+
+        # Rearrange the columns in the DataFrame
+        df = df[final_columns]
         return df
 
-    def search_catalog(self, var_name=None, loc_name=None, pipe_name=None):
-        """
-        Searches for variables containing a keyword in their names within a DataFrame.
-        
-        Arguments:
-            - Var_name (str): The variable name
-            - Loc_name (str): The location of the variable you want to search for
-            - Pipe_name (str): the pipe name of the variable name specified located at the location name provided.
-        
-        Returns:
-            - Pandas.DataFrame: a dataframe containing catalog information of the variables specified.
-
-        """
-        cat = self.catalog
-        result_df = search(cat, var_name, loc_name, pipe_name)
-        if result_df.empty:
-            raise ValueError(f"We don't have {var_name} in our catalog.")
-        return result_df
+    def search_catalog(self, var_name=None, **locators):
+            """
+            Searches for variables containing a keyword in their names within a DataFrame.
+            
+            Arguments:
+                - Var_name (str): The variable name
+                - Loc_name (str): The location of the variable you want to search for
+                - Pipe_name (str): the pipe name of the variable name specified located at the location name provided.
+            
+            Returns:
+                - Pandas.DataFrame: a dataframe containing catalog information of the variables specified.
+    
+            """
+            cat = self._extract_catalog()
+            locators = {key.replace("_", " "): value for key, value in locators.items()}
+            result_df = search(cat, var_name, **locators)
+            if result_df.empty:
+                raise ValueError(f"We don't have {var_name} in our catalog.")
+            result_df = result_df.dropna(axis=1, how='all')
+            return result_df
 
     def extract_trend(self, input_matrix: pd.DataFrame):
         """
-        Search for variables in the DataFrame based on variable names, branches, and pipe names, and display their information.
-        
-        Arguments:
-            - input_matrix (pd.DataFrame): The matrix containing variable names, branch names, and pipe names.
-        
-        Returns:
-            - pandas.DataFrame: A DataFrame containing information for all specified variables.
-        """
+        Extract trends dynamically based on user-specified variable names, locator types, and positions.
 
+        Arguments:
+            - input_matrix (pd.DataFrame): The matrix containing variable names, locator types (e.g., Choke, Position), 
+            output units, and time units.
+
+        Returns:
+            - pandas.DataFrame: A DataFrame containing extracted trend data.
+        """
         self.time, self.trends, self.time_unit = self._extract_time_series_data()
         self.trends.reset_index(drop=True, inplace=True)
-        df = pd.concat([self.catalog, self.trends], axis=1)
+        df = pd.concat([self._extract_catalog(), self.trends], axis=1)
+        # print(df.head())
         result_dfs = []
-        data = input_matrix
-        for index, row in data.iterrows():
+        
+        for _, row in input_matrix.iterrows():
             var_name = row["varname"]
-            if type(var_name) != str:
-                raise ValueError(
-                    "No variable name specified in row {}".format(index + 1)
-                )
-            loc_name = row["locname"]
-            pipe_name = row["pipename"]
-            row_number = row["row_number"]
-            out_unit = row["out_unit"]
-            time_unit = row["time_unit"]
-
-            search_args = [var_name, loc_name, pipe_name]
-            args = [v for v in search_args if type(v) == str]
-            if args:
-                result_df = search(df, *args)
+            if not isinstance(var_name, str):
+                raise ValueError(f"No variable name specified in row {_ + 1}")
+            
+            out_unit = row.get("out_unit", None)
+            time_unit = row.get("time_unit", None)
+            
+            # Identify which locator type is specified
+            locators = {col: row[col] for col in input_matrix.columns if col not in ["varname", "out_unit", "time_unit"]}
+            locators = {key: value for key, value in locators.items() if pd.notna(value)}  # Remove None values
+            
+            if not locators:
+                raise ValueError(f"No locator specified for variable '{var_name}' in row {_ + 1}")
+            
+            search_args = {"var_name": var_name, **locators}
+            result_df = search(df, **search_args) if search_args else pd.DataFrame()
+            
             if result_df.empty:
-                raise ValueError(
-                    f"No data found for variable '{var_name}' at branch '{loc_name}'"
-                )
-            else:
-                for _, row in result_df.iterrows():
-                    unit = row["out_unit"].replace("(", "").replace(")", "").lower()
-                    if pd.isna(out_unit):
-                        unit = unit.replace("/", "_")
-                        out_unit = unit
-                    var = row["varname"]
-                    unit_class = self.unitsdb["OLGA_vars"].get(var)
-
-                    if unit_class == None:
-                        for k, v in self.unitsdb["OLGA_startswith"].items():
-                            if str(var).startswith(k):
-                                unit_class = v
-                    variable_outputs = row.filter(like="variable_output").dropna()
-                    if row["Locator Type"] == "GLOBAL":
-                        heading = f"{row['varname']}_{unit}"
-                    else:
-                        heading = f"{row['varname']}_{unit}_{row['locname']}"
-                    self.time = list(dict.fromkeys(self.time))
-                    if pd.notna(time_unit):
-                        if self.time_unit in unit_map:
-                            self.time_unit = unit_map[self.time_unit]
-                            value_tagged = getattr(UnitConversion, "Time")(
-                                self.time, self.time_unit
-                            )
-                            values = value_tagged.convert(to_unit=time_unit)
-                            if time_unit in [
-                                "hour",
-                                "minute",
-                                "second",
-                                "min",
-                                "s",
-                                "h",
-                            ]:
-                                # self.time = [math.floor(value) for value in values]
-                                self.time = [round(value, 2) for value in values]
-                            else:
-                                self.time = values
-                        data = {
-                            f"Time_({str(time_unit).lower()})": self.time,
-                            heading: variable_outputs,
-                        }
-                    else:
-                        time_unit == "nan"
-                        time_unit = self.time_unit
-                        data = {
-                            f"Time_({str(self.time_unit).lower()})": self.time,
-                            heading: variable_outputs,
-                        }
-                    trend_df = pd.DataFrame(data)
-                    trend_df.set_index(f"Time_({str(time_unit).lower()})", inplace=True)
-                    converted_vals = []
-                    for _, row in trend_df.iterrows():
-                        value = row[heading]
-                        value_tagged = getattr(UnitConversion, unit_class)(value, unit)
-                        conv_val = value_tagged.convert(to_unit=out_unit)
-                        converted_vals.append(round(conv_val, 3))
-                    trend_df.drop(columns=trend_df.columns, inplace=True)
-                    trend_df[str(heading).replace(str(unit), str(out_unit))] = (
-                        converted_vals
-                    )
-                    if pd.notna(row_number):
-                        row_number = int(row_number)
-                        if row_number > 0:
-                            result_dfs.append(trend_df.head(row_number))
-                        else:
-                            result_dfs.append(trend_df.tail(-row_number))
-                    else:
-                        result_dfs.append(trend_df)
-
+                raise ValueError(f"No data found for variable '{var_name}' with locators {list(locators.keys())}")
+            
+            for _, result_row in result_df.iterrows():
+                unit = result_row["out_unit"].replace("(", "").replace(")", "").lower()
+                if pd.isna(out_unit):
+                    unit = unit.replace("/", "_")
+                    out_unit = unit
+                
+                var = result_row["varname"]
+                unit_class = self.unitsdb["OLGA_vars"].get(var)
+                if unit_class is None:
+                    for k, v in self.unitsdb["OLGA_startswith"].items():
+                        if str(var).startswith(k):
+                            unit_class = v
+                
+                variable_outputs = result_row.filter(like="variable_output").dropna()
+                locator_str = "_".join([f"{key}_{value}" for key, value in locators.items()])
+                heading = f"{var}_{unit}_{locator_str}" if locator_str else f"{var}_{unit}"
+                
+                self.time = list(dict.fromkeys(self.time))
+                
+                if pd.notna(time_unit) and self.time_unit in unit_map:
+                    self.time_unit = unit_map[self.time_unit]
+                    value_tagged = getattr(UnitConversion, "Time")(self.time, self.time_unit)
+                    values = value_tagged.convert(to_unit=time_unit)
+                    self.time = [round(value, 2) for value in values] if time_unit in ["hour", "minute", "second", "min", "s", "h"] else values
+                else:
+                    time_unit = self.time_unit
+                    
+                data = {
+                    f"Time_({str(time_unit).lower()})": self.time,
+                    heading: variable_outputs,
+                }
+                
+                trend_df = pd.DataFrame(data)
+                trend_df.set_index(f"Time_({str(time_unit).lower()})", inplace=True)
+                
+                converted_vals = []
+                for _, row in trend_df.iterrows():
+                    value = row[heading]
+                    value_tagged = getattr(UnitConversion, unit_class)(value, unit)
+                    conv_val = value_tagged.convert(to_unit=out_unit)
+                    converted_vals.append(round(conv_val, 3))
+                
+                trend_df.drop(columns=trend_df.columns, inplace=True)
+                trend_df[str(heading).replace(str(unit), str(out_unit))] = converted_vals
+                
+                result_dfs.append(trend_df)
+        
         if result_dfs:
             return pd.concat(result_dfs, axis=1)
         else:
