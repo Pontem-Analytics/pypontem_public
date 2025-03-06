@@ -74,21 +74,21 @@ def search(df, var_name=None, **locator_types):
     else:
         result_df = df 
 
-    if len(result_df) > 1:
-        additional_filters = [col for col in result_df.columns if col not in locator_types and col != "varname" and col != "out_unit" and col != "Description"]
-        if additional_filters:
-            raise ValueError(
-                f"Multiple results found for variable '{var_name}'. "
-                f"Consider adding one of the following filters to refine the search: {additional_filters}"
-            )
-        else:
-            raise ValueError(
-                f"Multiple results found for variable '{var_name}', but no additional filtering columns are available."
-            )
+    # if len(result_df) > 1:
+    #     additional_filters = [col for col in result_df.columns if col not in locator_types and col != "varname" and col != "out_unit" and col != "Description"]
+    #     if additional_filters:
+    #         raise ValueError(
+    #             f"Multiple results found for variable '{var_name}'. "
+    #             f"Consider adding one of the following filters to refine the search: {additional_filters}"
+    #         )
+    #     else:
+    #         raise ValueError(
+    #             f"Multiple results found for variable '{var_name}', but no additional filtering columns are available."
+    #         )
 
     if result_df.empty:
         raise ValueError(f"No matching data found for variable '{var_name}' with the specified locator filters.")
-
+    result_df = result_df.dropna(axis=1, how='all')
     return result_df
 
 
@@ -396,9 +396,9 @@ class tplParser:
             cat = self._extract_catalog()
             locators = {key.replace("_", " "): value for key, value in locators.items()}
             result_df = search(cat, var_name, **locators)
-            if result_df.empty:
-                raise ValueError(f"We don't have {var_name} in our catalog.")
-            result_df = result_df.dropna(axis=1, how='all')
+            # if result_df.empty:
+            #     raise ValueError(f"We don't have {var_name} in our catalog.")
+            
             return result_df
 
     def extract_trend(self, input_matrix: pd.DataFrame):
@@ -438,6 +438,17 @@ class tplParser:
             
             if result_df.empty:
                 raise ValueError(f"No data found for variable '{var_name}' with locators {list(locators.keys())}")
+            elif len(result_df) > 1:
+                additional_filters = [col for col in result_df.columns if col not in locators and col != "varname" and col != "out_unit" and col != "Description" and col != "variable_output"]
+                if additional_filters:
+                    raise ValueError(
+                        f"Multiple results found for variable '{var_name}'. "
+                        f"Consider adding one of the following filters to refine the search: {additional_filters}"
+                    )
+                else:
+                    raise ValueError(
+                        f"Multiple results found for variable '{var_name}', but no additional filtering columns are available."
+                    )
             
             for _, result_row in result_df.iterrows():
                 unit = result_row["out_unit"].replace("(", "").replace(")", "").lower()

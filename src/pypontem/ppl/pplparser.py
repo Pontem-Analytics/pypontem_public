@@ -78,21 +78,22 @@ def search(df, var_name=None, **locator_types):
     else:
         result_df = df 
 
-    if len(result_df) > 1:
-        additional_filters = [col for col in result_df.columns if col not in locator_types and col != "varname" and col !="Locator Type" and col != "out_unit" and col != "Description"]
-        if additional_filters:
-            raise ValueError(
-                f"Multiple results found for variable '{var_name}'. "
-                f"Consider adding one of the following filters to refine the search: {additional_filters}"
-            )
-        else:
-            raise ValueError(
-                f"Multiple results found for variable '{var_name}', but no additional filtering columns are available."
-            )
+    # if len(result_df) > 1:
+    #     additional_filters = [col for col in result_df.columns if col not in locator_types and col != "varname" and col !="Locator Type" and col != "out_unit" and col != "Description"]
+    #     if additional_filters:
+    #         raise ValueError(
+    #             f"Multiple results found for variable '{var_name}'. "
+    #             f"Consider adding one of the following filters to refine the search: {additional_filters}"
+    #         )
+    #     else:
+    #         raise ValueError(
+    #             f"Multiple results found for variable '{var_name}', but no additional filtering columns are available."
+    #         )
 
     if result_df.empty:
         raise ValueError(f"No matching data found for variable '{var_name}' with the specified locator filters.")
-
+    
+    result_df = result_df.dropna(axis=1, how='all')
     return result_df
 
 
@@ -394,9 +395,8 @@ class pplParser:
             cat = self._extract_catalog()
             locators = {key.replace("_", " "): value for key, value in locators.items()}
             result_df = search(cat, var_name, **locators)
-            if result_df.empty:
-                raise ValueError(f"We don't have {var_name} in our catalog.")
-            result_df = result_df.dropna(axis=1, how='all')
+            # if result_df.empty:
+            #     raise ValueError(f"We don't have {var_name} in our catalog.")
             return result_df
     
     def _extract_time_series_data(self):
@@ -555,17 +555,33 @@ class pplParser:
             data = time_series.filter(regex=search_pattern)
             
             # Create a matching condition for the catalog based on the locators
-            match_condition = (df_catalog["varname"] == var_name)
+            # match_condition = (df_catalog["varname"] == var_name)
 
-            # Dynamically add conditions for each locator column specified by the user
+            # # Dynamically add conditions for each locator column specified by the user
             for locator_column, locator_value in locators.items():
-                match_condition &= (df_catalog[locator_column] == locator_value)
+                pass
+            #     match_condition &= (df_catalog[locator_column] == locator_value)
 
-            # Find the matching row in the catalog
-            match = df_catalog[match_condition]
+            # # Find the matching row in the catalog
+            # match = df_catalog[match_condition]
 
+            
+
+            search_args = {"var_name": var_name, **locators}
+            match = search(df_catalog, **search_args) if search_args else pd.DataFrame()
             match.reset_index(drop=True, inplace=True)
-            # search_args = {"var_name": var_name, **locators}
+            if len(match) > 1:
+                additional_filters = [col for col in match.columns if col not in locators and col != "varname" and col !="Locator Type" and col != "out_unit" and col != "Description"]
+                if additional_filters:
+                    raise ValueError(
+                        f"Multiple results found for variable '{var_name}'. "
+                        f"Consider adding one of the following filters to refine the search: {additional_filters}"
+                    )
+                else:
+                    raise ValueError(
+                        f"Multiple results found for variable '{var_name}', but no additional filtering columns are available."
+                    )
+                
             if not match.empty:
                 location = match["Locator Type"].values[0]
             else:
@@ -1000,7 +1016,7 @@ if __name__ == "__main__":
         args.filepath = args.filepath.replace("\\", "/")
         #args.filepath = [fp.replace("\\", "/") for fp in args.filepath]
 
-        # input_matrix = pd.read_csv(args.csv_file)
+        input_matrix = pd.read_csv(args.csv_file)
         # branch_matrix = pd.read_csv(args.branch_csv_file)
         # pplbatchparser = pplBatchParser(args.filepath)
         # trends = pplbatchparser.extract_trends(input_matrix)
@@ -1010,12 +1026,12 @@ if __name__ == "__main__":
         pplparser = pplParser(args.filepath)
         # time_series = pplparser._extract_time_series_data()
         # catalog = pplparser._extract_catalog()
-        catalog = pplparser.search_catalog(var_name="PT")
+        # catalog = pplparser.search_catalog(var_name="PT", BRANCH="ISABELA_FLOWLINE")
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
-        # trends = pplparser.extract_profile(input_matrix= input_matrix)
+        trends = pplparser.extract_profile(input_matrix= input_matrix)
         # nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
-        print(catalog)
+        print(trends.head(2))
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)
     # results.print_stats(20)
