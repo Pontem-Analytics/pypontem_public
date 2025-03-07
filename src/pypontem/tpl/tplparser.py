@@ -68,7 +68,8 @@ def search(df, var_name=None, **locator_types):
         filter_conditions.append(df["varname"].str.upper() == var_name.upper())
     for col, value in locator_types.items():
         if col in df.columns and value and value != "None":
-            filter_conditions.append(df[col].str.upper() == value.upper())
+            filter_conditions.append(df[col].str.upper() == str(value).upper())
+
     if filter_conditions:
         result_df = df[reduce(lambda x, y: x & y, filter_conditions)]
     else:
@@ -429,10 +430,8 @@ class tplParser:
             # Identify which locator type is specified
             locators = {col: row[col] for col in input_matrix.columns if col not in ["varname", "out_unit", "time_unit"]}
             locators = {key: value for key, value in locators.items() if pd.notna(value)}  # Remove None values
-            
             if not locators:
                 raise ValueError(f"No locator specified for variable '{var_name}' in row {_ + 1}")
-            
             search_args = {"var_name": var_name, **locators}
             result_df = search(df, **search_args) if search_args else pd.DataFrame()
             
@@ -841,5 +840,5 @@ if __name__ == "__main__":
     # data1 = tplparser.calc_average(
     #     input_matrix=input_matrix, n_timeunits=args.n_timeunits
     # )
-    # data2 = tplparser.search_catalog(var_name=args.varname, pipe_name=args.pipe)
+    # data = tplparser.search_catalog(var_name="PT")
     print(data)

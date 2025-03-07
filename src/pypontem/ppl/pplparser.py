@@ -72,7 +72,7 @@ def search(df, var_name=None, **locator_types):
         filter_conditions.append(df["varname"].str.upper() == var_name.upper())
     for col, value in locator_types.items():
         if col in df.columns and value and value != "None":
-            filter_conditions.append(df[col].str.upper() == value.upper())
+            filter_conditions.append(df[col].str.upper() == str(value).upper())
     if filter_conditions:
         result_df = df[reduce(lambda x, y: x & y, filter_conditions)]
     else:
@@ -1026,12 +1026,12 @@ if __name__ == "__main__":
         pplparser = pplParser(args.filepath)
         # time_series = pplparser._extract_time_series_data()
         # catalog = pplparser._extract_catalog()
-        # catalog = pplparser.search_catalog(var_name="PT", BRANCH="ISABELA_FLOWLINE")
+        # catalog = pplparser.search_catalog(var_name="PT")
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
         trends = pplparser.extract_profile(input_matrix= input_matrix)
         # nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
-        print(trends.head(2))
+        print(trends)
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)
     # results.print_stats(20)
