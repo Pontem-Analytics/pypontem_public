@@ -72,7 +72,12 @@ def search(df, var_name=None, **locator_types):
         filter_conditions.append(df["varname"].str.upper() == var_name.upper())
     for col, value in locator_types.items():
         if col in df.columns and value and value != "None":
-            filter_conditions.append(df[col].str.upper() == str(value).upper())
+            if col == "NR" or col == "WALL LAYER":
+                df[col] = df[col].astype(float)
+                filter_conditions.append(df[col] == value)
+            else:    
+                filter_conditions.append(df[col].str.upper() == value.upper())
+
     if filter_conditions:
         result_df = df[reduce(lambda x, y: x & y, filter_conditions)]
     else:

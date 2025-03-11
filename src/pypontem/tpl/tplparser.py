@@ -63,12 +63,15 @@ def search(df, var_name=None, **locator_types):
         pandas.DataFrame: Filtered DataFrame based on search criteria.
     """
     filter_conditions = []
-
     if var_name:
         filter_conditions.append(df["varname"].str.upper() == var_name.upper())
     for col, value in locator_types.items():
         if col in df.columns and value and value != "None":
-            filter_conditions.append(df[col].str.upper() == str(value).upper())
+            if col == "NR" or col == "WALL LAYER":
+                df[col] = df[col].astype(float)
+                filter_conditions.append(df[col] == value)
+            else:    
+                filter_conditions.append(df[col].str.upper() == value.upper())
 
     if filter_conditions:
         result_df = df[reduce(lambda x, y: x & y, filter_conditions)]
@@ -426,7 +429,6 @@ class tplParser:
             
             out_unit = row.get("out_unit", None)
             time_unit = row.get("time_unit", None)
-            
             # Identify which locator type is specified
             locators = {col: row[col] for col in input_matrix.columns if col not in ["varname", "out_unit", "time_unit"]}
             locators = {key: value for key, value in locators.items() if pd.notna(value)}  # Remove None values
