@@ -419,7 +419,6 @@ class tplParser:
         self.time, self.trends, self.time_unit = self._extract_time_series_data()
         self.trends.reset_index(drop=True, inplace=True)
         df = pd.concat([self._extract_catalog(), self.trends], axis=1)
-        # print(df.head())
         result_dfs = []
         
         for _, row in input_matrix.iterrows():
@@ -436,7 +435,6 @@ class tplParser:
                 raise ValueError(f"No locator specified for variable '{var_name}' in row {_ + 1}")
             search_args = {"var_name": var_name, **locators}
             result_df = search(df, **search_args) if search_args else pd.DataFrame()
-            
             if result_df.empty:
                 raise ValueError(f"No data found for variable '{var_name}' with locators {list(locators.keys())}")
             elif len(result_df) > 1:
@@ -459,6 +457,7 @@ class tplParser:
                 
                 var = result_row["varname"]
                 unit_class = self.unitsdb["OLGA_vars"].get(var)
+                
                 if unit_class is None:
                     for k, v in self.unitsdb["OLGA_startswith"].items():
                         if str(var).startswith(k):
@@ -467,22 +466,19 @@ class tplParser:
                 variable_outputs = result_row.filter(like="variable_output").dropna()
                 locator_str = "_".join([f"{key}_{value}" for key, value in locators.items()])
                 heading = f"{var}_{unit}_{locator_str}" if locator_str else f"{var}_{unit}"
-                
-                self.time = list(dict.fromkeys(self.time))
-                
+
                 if pd.notna(time_unit) and self.time_unit in unit_map:
+                    self.time = list(dict.fromkeys(self.time))
                     self.time_unit = unit_map[self.time_unit]
                     value_tagged = getattr(UnitConversion, "Time")(self.time, self.time_unit)
                     values = value_tagged.convert(to_unit=time_unit)
                     self.time = [round(value, 2) for value in values] if time_unit in ["hour", "minute", "second", "min", "s", "h"] else values
                 else:
-                    time_unit = self.time_unit
-                    
+                    time_unit = self.time_unit 
                 data = {
                     f"Time_({str(time_unit).lower()})": self.time,
                     heading: variable_outputs,
                 }
-                
                 trend_df = pd.DataFrame(data)
                 trend_df.set_index(f"Time_({str(time_unit).lower()})", inplace=True)
                 
@@ -495,11 +491,11 @@ class tplParser:
                 
                 trend_df.drop(columns=trend_df.columns, inplace=True)
                 trend_df[str(heading).replace(str(unit), str(out_unit))] = converted_vals
-                
                 result_dfs.append(trend_df)
-        
+
         if result_dfs:
             return pd.concat(result_dfs, axis=1)
+            
         else:
             print("No data found.")
             return None
