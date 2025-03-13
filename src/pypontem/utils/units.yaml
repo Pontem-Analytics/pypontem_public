@@ -66,6 +66,8 @@ OLGA_vars:
   ROL : Density
   ROHL : Density
   ROWT : Density
+  EVRRHOMIX : Density
+  ROF : Density
   QLST : VolumetricStandardFlowrate
   QOST : VolumetricStandardFlowrate
   QGST : VolumetricStandardFlowrate
@@ -97,6 +99,7 @@ OLGA_vars:
   CORRW3 : CorrosionRate
   GORST : GOR 
   GORST_DRY : GOR
+  GLRST : GOR
   GASC: Volume
   ACCLIQ : Volume
   ACCOIQ : Volume
@@ -121,6 +124,9 @@ OLGA_vars:
   GLWV : MassFlowrate
   GLWVT : MassFlowrate
   UG : Velocity
+  USG : Velocity
+  UL : Velocity
+  EVRVACTUAL : Velocity
   HT : Time
   HOL : Unitless
   ID : Unitless
@@ -142,6 +148,9 @@ OLGA_vars:
   VALVOP : Unitless
   VALVDP : Unitless
   GASCFR : Unitless
+  WCST : Unitless
+  AL : Unitless
+
 
 
 OLGA_startswith:
@@ -151,6 +160,8 @@ OLGA_startswith:
   CQL : VolumetricFlowRate
   CQLTHL : VolumetricFlowRate
   CQLTWT : VolumetricFlowRate
+  DPZ : PressureGradient
+  VIS : Viscosity
   XGE_ : Unitless
   XHE_ : Unitless
   XWE_ : Unitless

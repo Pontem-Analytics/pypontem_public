@@ -402,6 +402,7 @@ class pplParser:
             result_df = search(cat, var_name, **locators)
             # if result_df.empty:
             #     raise ValueError(f"We don't have {var_name} in our catalog.")
+            result_df = result_df.drop(columns=["Locator Type"])
             return result_df
     
     def _extract_time_series_data(self):
@@ -1021,7 +1022,7 @@ if __name__ == "__main__":
         args.filepath = args.filepath.replace("\\", "/")
         #args.filepath = [fp.replace("\\", "/") for fp in args.filepath]
 
-        input_matrix = pd.read_csv(args.csv_file)
+        # input_matrix = pd.read_csv(args.csv_file)
         # branch_matrix = pd.read_csv(args.branch_csv_file)
         # pplbatchparser = pplBatchParser(args.filepath)
         # trends = pplbatchparser.extract_trends(input_matrix)
@@ -1031,12 +1032,12 @@ if __name__ == "__main__":
         pplparser = pplParser(args.filepath)
         # time_series = pplparser._extract_time_series_data()
         # catalog = pplparser._extract_catalog()
-        # catalog = pplparser.search_catalog(var_name="PT")
+        catalog = pplparser.search_catalog(var_name="PT")
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
-        trends = pplparser.extract_profile(input_matrix= input_matrix)
+        # trends = pplparser.extract_profile(input_matrix= input_matrix)
         # nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
-        print(trends)
+        print(catalog)
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)
     # results.print_stats(20)

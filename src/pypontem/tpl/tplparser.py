@@ -467,21 +467,24 @@ class tplParser:
                 locator_str = "_".join([f"{key}_{value}" for key, value in locators.items()])
                 heading = f"{var}_{unit}_{locator_str}" if locator_str else f"{var}_{unit}"
 
-                if pd.notna(time_unit) and self.time_unit in unit_map:
+                if pd.isna(time_unit):
+                    time_unit = self.time_unit
+                    self.time = [round(value, 4) for value in self.time]
+                elif pd.notna(time_unit) and self.time_unit in unit_map:
                     self.time = list(dict.fromkeys(self.time))
                     self.time_unit = unit_map[self.time_unit]
                     value_tagged = getattr(UnitConversion, "Time")(self.time, self.time_unit)
                     values = value_tagged.convert(to_unit=time_unit)
                     self.time = [round(value, 2) for value in values] if time_unit in ["hour", "minute", "second", "min", "s", "h"] else values
-                else:
-                    time_unit = self.time_unit 
+                # else:
+                #     time_unit = self.time_unit 
                 data = {
                     f"Time_({str(time_unit).lower()})": self.time,
                     heading: variable_outputs,
                 }
                 trend_df = pd.DataFrame(data)
                 trend_df.set_index(f"Time_({str(time_unit).lower()})", inplace=True)
-                
+
                 converted_vals = []
                 for _, row in trend_df.iterrows():
                     value = row[heading]
