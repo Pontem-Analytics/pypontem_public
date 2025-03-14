@@ -161,7 +161,7 @@ OLGA_startswith:
   CQLTHL : VolumetricFlowRate
   CQLTWT : VolumetricFlowRate
   DPZ : PressureGradient
-  VIS : Viscosity
+  VIS : DynamicViscosity
   XGE_ : Unitless
   XHE_ : Unitless
   XWE_ : Unitless

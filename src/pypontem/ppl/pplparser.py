@@ -72,7 +72,9 @@ def search(df, var_name=None, **locator_types):
         filter_conditions.append(df["varname"].str.upper() == var_name.upper())
     for col, value in locator_types.items():
         if col in df.columns and value and value != "None":
-            if col == "NR" or col == "WALL LAYER":
+            if col == "GLOBAL":
+                filter_conditions.append(df[col])
+            elif col == "NR" or col == "WALL LAYER":
                 df[col] = df[col].astype(float)
                 filter_conditions.append(df[col] == value)
             else:    
@@ -626,7 +628,6 @@ class pplParser:
                 for k, v in self.unitsdb["OLGA_startswith"].items():
                     if str(var_name).startswith(k):
                         unit_class = v
-
             converted_vals = []
             updated_column_vals = []
             for column in final_df.columns:
@@ -672,6 +673,8 @@ class pplParser:
             for _, row in filtered_df.iterrows():
                 for column_name in filtered_df.columns:
                     value = float(row[column_name])
+                    if "-" in unit:
+                        unit = unit.replace("-", "")
                     if pd.isna(out_unit):
                         out_unit = unit
 
@@ -1022,7 +1025,7 @@ if __name__ == "__main__":
         args.filepath = args.filepath.replace("\\", "/")
         #args.filepath = [fp.replace("\\", "/") for fp in args.filepath]
 
-        # input_matrix = pd.read_csv(args.csv_file)
+        input_matrix = pd.read_csv(args.csv_file)
         # branch_matrix = pd.read_csv(args.branch_csv_file)
         # pplbatchparser = pplBatchParser(args.filepath)
         # trends = pplbatchparser.extract_trends(input_matrix)
@@ -1032,12 +1035,12 @@ if __name__ == "__main__":
         pplparser = pplParser(args.filepath)
         # time_series = pplparser._extract_time_series_data()
         # catalog = pplparser._extract_catalog()
-        catalog = pplparser.search_catalog(var_name="PT")
+        # catalog = pplparser.search_catalog(var_name="PT")
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
-        # trends = pplparser.extract_profile(input_matrix= input_matrix)
+        trends = pplparser.extract_profile(input_matrix= input_matrix)
         # nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
-        print(catalog)
+        print(trends)
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)
     # results.print_stats(20)

@@ -67,7 +67,9 @@ def search(df, var_name=None, **locator_types):
         filter_conditions.append(df["varname"].str.upper() == var_name.upper())
     for col, value in locator_types.items():
         if col in df.columns and value and value != "None":
-            if col == "NR" or col == "WALL LAYER":
+            if col == "GLOBAL":
+                filter_conditions.append(df[col])
+            elif col == "NR" or col == "WALL LAYER":
                 df[col] = df[col].astype(float)
                 filter_conditions.append(df[col] == value)
             else:    
@@ -451,6 +453,8 @@ class tplParser:
             
             for _, result_row in result_df.iterrows():
                 unit = result_row["out_unit"].replace("(", "").replace(")", "").lower()
+                if "-" in unit:
+                    unit = unit.replace("-", "")
                 if pd.isna(out_unit):
                     unit = unit.replace("/", "_")
                     out_unit = unit
@@ -842,4 +846,4 @@ if __name__ == "__main__":
     #     input_matrix=input_matrix, n_timeunits=args.n_timeunits
     # )
     # data = tplparser.search_catalog(var_name="PT")
-    print(data)
+    print(data.head())
