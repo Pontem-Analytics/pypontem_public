@@ -91,9 +91,10 @@
                     <thead class="table-dark">
                         <tr>
                             <th>varname</th>
-                            <th>locname</th>
-                            <th>pipename</th>
-                            <th>row_number</th>
+                            <th>BRANCH</th>
+                            <th>POSITION</th>
+                            <th>PIPE</th>
+                            <th>NR</th>
                             <th>out_unit</th>
                             <th>time_unit</th>
                         </tr>
@@ -101,49 +102,55 @@
                     <tbody>
                         <tr>
                             <td>QLT</td>
-                            <td>C TO B</td>
-                            <td></td>
-                            <td></td>
+                            <td>JUMPER-1</td>
+                            <td>None</td>
+                            <td>PIPE-1</td>
+                            <td>1</td>
                             <td>ft3_d</td>
                             <td>h</td>
                         </tr>
                         <tr>
                             <td>QLT</td>
-                            <td>C JUMPER</td>
-                            <td></td>
-                            <td></td>
+                            <td>JUMPER-2</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
                             <td>ft3_d</td>
                             <td>h</td>
                         </tr>
                         <tr>
                             <td>QLT</td>
-                            <td>B TO A</td>
-                            <td></td>
-                            <td></td>
+                            <td>None</td>
+                            <td>TOP_1</td>
+                            <td>None</td>
+                            <td>None</td>
                             <td>ft3_d</td>
                             <td>h</td>
                         </tr>
                         <tr>
                             <td>PT</td>
-                            <td>C JUMPER</td>
-                            <td></td>
-                            <td></td>
+                            <td>JUMPER-1</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
                             <td>pa</td>
                             <td>h</td>
                         </tr>
                         <tr>
                             <td>PT</td>
-                            <td>C TO B</td>
-                            <td></td>
-                            <td></td>
+                            <td>None</td>
+                            <td>TOP_1</td>
+                            <td>None</td>
+                            <td>None</td>
                             <td>pa</td>
                             <td>h</td>
                         </tr>
                         <tr>
                             <td>PT</td>
                             <td>B TO A</td>
-                            <td></td>
-                            <td></td>
+                            <td>None</td>
+                            <td>PIPE-2</td>
+                            <td>2</td>
                             <td>pa</td>
                             <td>h</td>
                         </tr>
@@ -154,9 +161,11 @@
             <div class="col-md-6" style="padding-top: 20px;">
                 <h3 class="text-center mb-4">Description</h3>
                 <p><strong>varname</strong>: Name of variable as specified in OLGA file</p>
-                <p><strong>locname</strong>: Location name for the variable. This could be a branch name or position name</p>
-                <p><strong>pipename</strong>: The name of the pipe. Some variables may not need this, in which case it can be left blank</p>
-                <p><strong>row_number</strong>: The number of rows you want in the output for extract_trend</p>
+                <p><strong>BRANCH, POSITION</strong>: The location name associated with the variable. This can represent a branch, position, node, choke, controller, or global.
+                    Each location has its own column, use <b>None</b> where a corresponding value is not available <p>
+                <p><strong>PIPE, NR</strong>: Additional metadata from the file to help extract the exact variable intended. this could be the name of the pipe (PIPE), pipe number (NR) and wall layer (WALL LAYER).
+                     Some variables may not need this, in which case it can be left blank</p>
+                <!-- <p><strong>row_number</strong>: The number of rows you want in the output for extract_trend</p> -->
                 <p><strong>out_unit</strong>: The output unit you desire. If you leave this blank, default units within the OLGA file will be used. <em>NOTE</em>: The list of compatible units, and the syntax is provided <a href="logbook.html">here</a>.
                 <b>If you do not use the syntax provided, there will be errors.</b></p>
                 <p><strong>time_unit</strong>: The unit of time you desire the outputs in.</p>
@@ -176,7 +185,9 @@
                     <thead class="table-dark">
                         <tr>
                             <th>varname</th>
-                            <th>branchname</th>
+                            <th>BRANCH</th>
+                            <th>PIPE</th>
+                            <th>NR</th>
                             <th>out_unit</th>
                             <th>out_unit_profile</th>
                             <th>time_unit</th>
@@ -188,6 +199,8 @@
                         <tr>
                             <td>QLT</td>
                             <td>FLOWLINE_1</td>
+                            <td>None</td>
+                            <td>None</td>
                             <td>m3_s</td>
                             <td>ft</td>
                             <td>h</td>
@@ -197,6 +210,8 @@
                         <tr>
                             <td>QLT</td>
                             <td>RISER_1</td>
+                            <td>PIPE-1</td>
+                            <td>1</td>
                             <td>m3_s</td>
                             <td>ft</td>
                             <td>h</td>
@@ -206,6 +221,8 @@
                         <tr>
                             <td>QLT</td>
                             <td>WELLBORE_1</td>
+                            <td>None</td>
+                            <td>None</td>
                             <td>m3_s</td>
                             <td>ft</td>
                             <td>h</td>
@@ -215,6 +232,8 @@
                         <tr>
                             <td>PT</td>
                             <td>FLOWLINE_1</td>
+                            <td>PIPE-1</td>
+                            <td>2</td>
                             <td>pa</td>
                             <td>ft</td>
                             <td>h</td>
@@ -224,6 +243,8 @@
                         <tr>
                             <td>PT</td>
                             <td>RISER_1</td>
+                            <td>None</td>
+                            <td>None</td>
                             <td>pa</td>
                             <td>ft</td>
                             <td>h</td>
@@ -233,6 +254,8 @@
                         <tr>
                             <td>PT</td>
                             <td>WELLBORE_1</td>
+                            <td>PIPE-2</td>
+                            <td>1</td>
                             <td>pa</td>
                             <td>ft</td>
                             <td>h</td>
@@ -246,7 +269,10 @@
             <div class="col-md-4" style="padding-top: 20px;">
                 <h3 class="text-center mb-4">Description</h3>
                 <p><strong>varname</strong>: Name of variable as specified in OLGA file</p>
-                <p><strong>branchname</strong>: Location name for the variable. This could be a branch name or position name</p>
+                <p><strong>BRANCH, POSITION</strong>: The location name associated with the variable. This can represent a branch, position, node, choke, controller, or global.
+                    Each location has its own column, use <b>None</b> where a corresponding value is not available <p>
+                <p><strong>PIPE, NR</strong>: Additional metadata from the file to help extract the exact variable intended. this could be the name of the pipe (PIPE), pipe number (NR) and wall layer (WALL LAYER).
+                     Some variables may not need this, in which case it can be left blank</p>
                 <p><strong>out_unit</strong>: The output unit you desire. If you leave this blank, default units within the OLGA file will be used. NOTE: The list of compatible units, and the syntax is provided <a href="logbook.html">here</a>. 
                 <b>If you do not use the syntax provided, there will be errors.</b></p>
                 <p><strong>out_unit_profile</strong>: The unit of profiles you want your outputs in.</p>
@@ -287,8 +313,8 @@
             <!-- Right Column: Description -->
             <div class="col-md-6" style="padding-top: 20px;">
                 <h3 class="text-center mb-4">Description</h3>
-                <p><strong>branch_in</strong>: Names of starting branches.</p>
-                <p><strong>branch_out</strong>: Names of ending branches.</p>
+                <p><strong>branch_in</strong>: Names of starting nodes.</p>
+                <p><strong>branch_out</strong>: Names of ending nodes.</p>
             </div>
         </div>
     </div>

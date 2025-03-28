@@ -8118,20 +8118,20 @@ all of MD as it is not optimized for dense, information rich UIs.
                       <div class="jp-OutputArea-child">
                         <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
                         <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-                          <pre>  varname Locator Type   locname pipename out_unit  \
-0    QLST    BOUNDARY:  JUMPER-1   PIPE-1    (SM3/S)   
-1    QOST    BOUNDARY:  JUMPER-1   PIPE-1    (SM3/S)    
-2    QWST    BOUNDARY:  JUMPER-1   PIPE-1    (SM3/S)   
-3    QGST    BOUNDARY:  JUMPER-1   PIPE-1    (SM3/S)    
-4      GT    BOUNDARY:  JUMPER-1   PIPE-1    (KG/S)   
-
+                          <pre>  varname    BRANCH    PIPE NR POSITION out_unit  \
+0    QLST  JUMPER-1  PIPE-1  1      NaN  (SM3/S)   
+1    QOST  JUMPER-1  PIPE-1  1      NaN  (SM3/S)   
+2    QWST  JUMPER-1  PIPE-1  1      NaN  (SM3/S)   
+3    QGST  JUMPER-1  PIPE-1  1      NaN  (SM3/S)   
+4      GT  JUMPER-1  PIPE-1  1      NaN   (KG/S)   
+                            
                                  Description  
 0  Liquid volume flow at standard conditions  
 1     Oil volume flow at standard conditions  
 2   Water volume flow at standard conditions  
 3     Gas volume flow at standard conditions  
 4                            Total mass flow  
-</pre>
+                            </pre>
                         </div>
                       </div>
                     </div>
@@ -8183,20 +8183,20 @@ all of MD as it is not optimized for dense, information rich UIs.
                       <div class="jp-OutputArea-child">
                         <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
                         <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-                          <pre>   varname Locator Type     locname pipename out_unit  \
-0     QLST    BOUNDARY:    JUMPER-1   PIPE-1    (SM3/S)   
-13    QLST    BOUNDARY:  FLOWLINE-1    LPL-4    (SM3/S)   
-25    QLST    BOUNDARY:  FLOWLINE-2    LPL-5    (SM3/S)    
-26    QLST    BOUNDARY:  FLOWLINE-2    LPL-6    (SM3/S)   
-27    QLST    BOUNDARY:  FLOWLINE-2    LPL-7    (SM3/S)    
-
+                          <pre>   varname      BRANCH    PIPE NR out_unit  \
+0     QLST    JUMPER-1  PIPE-1  1  (SM3/S)   
+13    QLST  FLOWLINE-1   LPL-4  1  (SM3/S)   
+25    QLST  FLOWLINE-2   LPL-5  1  (SM3/S)   
+26    QLST  FLOWLINE-2   LPL-6  1  (SM3/S)   
+27    QLST  FLOWLINE-2   LPL-7  1  (SM3/S)   
+                            
                                   Description  
 0   Liquid volume flow at standard conditions  
 13  Liquid volume flow at standard conditions  
 25  Liquid volume flow at standard conditions  
 26  Liquid volume flow at standard conditions  
 27  Liquid volume flow at standard conditions  
-</pre>
+                            </pre>
                         </div>
                       </div>
                     </div>
@@ -8296,9 +8296,8 @@ Time_(hour)
                           <div class="cm-editor cm-s-jupyter">
                             <div class="highlight hl-ipython3">
                               <pre><span></span><span class="n">matrix</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"varname"</span><span class="p">:</span><span class="s2">"PT"</span><span class="p">,</span>
-              <span class="s2">"locname"</span><span class="p">:</span><span class="s2">"JUMPER-1"</span><span class="p">,</span>
-              <span class="s2">"pipename"</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span>
-              <span class="s2">"row_number"</span><span class="p">:</span><span class="kc">None</span> <span class="p">,</span>
+              <span class="s2">"BRANCH"</span><span class="p">:</span><span class="s2">"JUMPER-1"</span><span class="p">,</span>
+              <span class="s2">"PIPE"</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span>
               <span class="s2">"out_unit"</span><span class="p">:</span><span class="s2">"psig"</span><span class="p">,</span>
               <span class="s2">"time_unit"</span><span class="p">:</span><span class="s2">"h"</span><span class="p">}</span>
             </pre>

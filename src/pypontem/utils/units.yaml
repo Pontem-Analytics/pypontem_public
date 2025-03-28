@@ -123,6 +123,10 @@ OLGA_vars:
   GLWT : MassFlowrate
   GLWV : MassFlowrate
   GLWVT : MassFlowrate
+  GTWELL : MassFlowrate
+  GGWELL : MassFlowrate
+  GLWELL : MassFlowrate
+  GLSOUR : MassFlowrate
   UG : Velocity
   USG : Velocity
   UL : Velocity

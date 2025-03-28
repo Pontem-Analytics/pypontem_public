@@ -578,6 +578,7 @@ class pplParser:
             search_args = {"var_name": var_name, **locators}
             match = search(df_catalog, **search_args) if search_args else pd.DataFrame()
             match.reset_index(drop=True, inplace=True)
+
             if len(match) > 1:
                 additional_filters = [col for col in match.columns if col not in locators and col != "varname" and col !="Locator Type" and col != "out_unit" and col != "Description"]
                 if additional_filters:
@@ -623,7 +624,9 @@ class pplParser:
             # Process trend and time values
             final_df = data.dropna()
             unit = match["out_unit"].str.extract(r"\((.*?)\)", expand=False).str.lower().to_string(index=False)
+            
             unit_class = self.unitsdb["OLGA_vars"].get(var_name)
+            
             if unit_class is None:
                 for k, v in self.unitsdb["OLGA_startswith"].items():
                     if str(var_name).startswith(k):
@@ -676,8 +679,11 @@ class pplParser:
                     if "-" in unit:
                         unit = unit.replace("-", "")
                     if pd.isna(out_unit):
-                        out_unit = unit
-
+                        out_unit = unit_map[unit]
+                        
+                    if unit in unit_map:
+                        unit = unit_map[unit]
+                
                     value_tagged = getattr(UnitConversion, unit_class)(value, unit)
                     converted_vals.append(round(value_tagged.convert(to_unit=out_unit), 3))
 

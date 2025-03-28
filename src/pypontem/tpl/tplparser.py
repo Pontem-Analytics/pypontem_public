@@ -93,7 +93,7 @@ def search(df, var_name=None, **locator_types):
     #         )
 
     if result_df.empty:
-        raise ValueError(f"No matching data found for variable '{var_name}' with the specified locator filters.")
+        raise ValueError(f"No matching data found for variable '{var_name}'  with the specified locator filters.")
     result_df = result_df.dropna(axis=1, how='all')
     return result_df
 
@@ -842,8 +842,9 @@ if __name__ == "__main__":
     tplparser = tplParser(args.filepath)
     input_matrix = pd.read_csv(args.csv_file)
     data = tplparser.extract_trend(input_matrix)
+    # data = tplparser.catalog
     # data1 = tplparser.calc_average(
     #     input_matrix=input_matrix, n_timeunits=args.n_timeunits
     # )
     # data = tplparser.search_catalog(var_name="PT")
-    print(data.head())
+    print(data.head(5))

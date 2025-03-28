@@ -7920,13 +7920,13 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>    Name Locator Type Locator Name Pipe Name Pipe Number       Unit  \
-0    QLT    BOUNDARY:   FLOWLINE-1      None        None     (M3/S)   
-1     QG    BOUNDARY:   FLOWLINE-1      None        None     (M3/S)   
-2     ID    BOUNDARY:   FLOWLINE-1      None        None        (-)   
-3  GORST    BOUNDARY:   FLOWLINE-1      None        None  (SM3/SM3)   
-4   QGST    BOUNDARY:   FLOWLINE-1      None        None    (SM3/S)   
-
+  <pre>  varname Locator Type      BRANCH   out_unit  \
+0     QLT    BOUNDARY:  FLOWLINE-1     (M3/S)   
+1      QG    BOUNDARY:  FLOWLINE-1     (M3/S)   
+2      ID    BOUNDARY:  FLOWLINE-1        (-)   
+3   GORST    BOUNDARY:  FLOWLINE-1  (SM3/SM3)   
+4    QGST    BOUNDARY:  FLOWLINE-1    (SM3/S)   
+    
                                                Description  
 0                                 Total liquid volume flow  
 1                                          Gas volume flow  
@@ -7976,20 +7976,13 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>    Name Locator Type Locator Name Pipe Name Pipe Number Unit  \
-14    TM     SECTION:   FLOWLINE-1      None        None  (C)   
-44    TM     SECTION:      RISER-1      None        None  (C)   
-77    TM     SECTION:     JUMPER-1      None        None  (C)   
-103   TM     SECTION:   WELLBORE-1      None        None  (C)   
-129   TM     SECTION:      RISER-1      None        None  (C)   
-
-           Description  
-14   Fluid temperature  
-44   Fluid temperature  
-77   Fluid temperature  
-103  Fluid temperature  
-129  Fluid temperature  
-</pre>
+  <pre>    varname     BRANCH   out_unit      Description
+14       TM  FLOWLINE-1      (C)  Fluid temperature
+44       TM     RISER-1      (C)  Fluid temperature
+77       TM    JUMPER-1      (C)  Fluid temperature
+103      TM  WELLBORE-1      (C)  Fluid temperature
+129      TM     RISER-1      (C)  Fluid temperature
+    </pre>
 </div>
 </div>
 </div>
@@ -8102,7 +8095,7 @@ a.anchor-link {
   <div class="cm-editor cm-s-jupyter">
   <div class="highlight hl-ipython3"><pre><span></span><span class="n">matrix</span> <span class="o">=</span> <span class="p">{</span>
       <span class="s2">"varname"</span><span class="p">:</span><span class="s2">"PT"</span><span class="p">,</span>
-      <span class="s2">"branchname"</span><span class="p">:</span><span class="s2">"FLOWLINE-1"</span><span class="p">,</span>
+      <span class="s2">"BRANCH"</span><span class="p">:</span><span class="s2">"FLOWLINE-1"</span><span class="p">,</span>
       <span class="s2">"out_unit"</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span>
       <span class="s2">"out_unit_profile"</span><span class="p">:</span><span class="s2">"m"</span><span class="p">,</span>
       <span class="s2">"time_unit"</span><span class="p">:</span><span class="s2">"h"</span><span class="p">,</span>

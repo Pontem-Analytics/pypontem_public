@@ -12,6 +12,7 @@ unit_map = {
     "W": "week",
     "M": "month",
     "Y": "year",
+    "stb/d" : "sbbl_d",
 }
 
 
@@ -939,6 +940,7 @@ class UnitConversion:
         def __init__(self, value, unit):
             self.value = value
             self.unit = unit
+            print(unit)
 
         def convert(self, to_unit):
             """Converts the value to the specified unit."""
