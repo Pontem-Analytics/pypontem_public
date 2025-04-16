@@ -62,9 +62,20 @@ def search(df, var_name=None, **locator_types):
     Returns:
         pandas.DataFrame: Filtered DataFrame based on search criteria.
     """
+
+    
     filter_conditions = []
+
     if var_name:
-        filter_conditions.append(df["varname"].str.upper() == var_name.upper())
+        varname_df = df[df["Variable"].str.upper() == var_name.upper()]
+
+        # If there's only one match and its locator type is 'GLOBAL', return immediately
+        if len(varname_df) == 1 and 'GLOBAL' in varname_df.columns:
+            if varname_df["GLOBAL"].iloc[0]:
+                return varname_df.dropna(axis=1, how='all')
+
+        filter_conditions.append(df["Variable"].str.upper() == var_name.upper())
+
     for col, value in locator_types.items():
         if col in df.columns and value and value != "None":
             if col == "GLOBAL":
@@ -344,13 +355,13 @@ class tplParser:
             match = pattern.match(line)
             if match:
                 data_entry = {
-                    "varname": match.group("varname"),
-                    "out_unit": match.group("unit"),
+                    "Variable": match.group("varname"),
+                    "Units": match.group("unit").strip("()"),
                     "Description": match.group("description")
                 }
 
                 # Capture and process locator types
-                locator_type = match.group("locator_type")
+                locator_type = match.group("locator_type").capitalize()
                 if locator_type:
                     locname = match.group("locname")
                     data_entry[locator_type] = locname  # Create a column with locator type value
@@ -380,7 +391,7 @@ class tplParser:
         
         # Define the final column order (varname, locator_types, extras, out_unit, description)
         # First column is 'varname', last two are 'out_unit' and 'Description', the rest are dynamic locators and extras.
-        final_columns = ["varname"] + [col for col in df.columns if col not in ["varname", "out_unit", "Description"]] + ["out_unit", "Description"]
+        final_columns = ["Variable"] + [col for col in df.columns if col not in ["Variable", "Units", "Description"]] + ["Units", "Description"]
 
         # Rearrange the columns in the DataFrame
         df = df[final_columns]
@@ -407,7 +418,7 @@ class tplParser:
             
             return result_df
 
-    def extract_trend(self, input_matrix: pd.DataFrame):
+    def extract_trend(self, input_matrix):
         """
         Extract trends dynamically based on user-specified variable names, locator types, and positions.
 
@@ -418,6 +429,15 @@ class tplParser:
         Returns:
             - pandas.DataFrame: A DataFrame containing extracted trend data.
         """
+        if type(input_matrix) == dict:
+            if all(not isinstance(v, (list, tuple, pd.Series)) for v in input_matrix.values()):
+                input_matrix = pd.DataFrame([input_matrix])
+            input_matrix = pd.DataFrame(input_matrix)
+        elif type(input_matrix) == pd.DataFrame:
+            input_matrix = input_matrix
+        else:
+            input_matrix = pd.read_csv(input_matrix)
+
         self.time, self.trends, self.time_unit = self._extract_time_series_data()
         self.trends.reset_index(drop=True, inplace=True)
         df = pd.concat([self._extract_catalog(), self.trends], axis=1)
@@ -433,8 +453,8 @@ class tplParser:
             # Identify which locator type is specified
             locators = {col: row[col] for col in input_matrix.columns if col not in ["varname", "out_unit", "time_unit"]}
             locators = {key: value for key, value in locators.items() if pd.notna(value)}  # Remove None values
-            if not locators:
-                raise ValueError(f"No locator specified for variable '{var_name}' in row {_ + 1}")
+            # if not locators:
+            #     raise ValueError(f"No locator specified for variable '{var_name}' in row {_ + 1}")
             search_args = {"var_name": var_name, **locators}
             result_df = search(df, **search_args) if search_args else pd.DataFrame()
             if result_df.empty:
@@ -452,14 +472,14 @@ class tplParser:
                     )
             
             for _, result_row in result_df.iterrows():
-                unit = result_row["out_unit"].replace("(", "").replace(")", "").lower()
+                unit = result_row["Units"].lower()
                 if "-" in unit:
                     unit = unit.replace("-", "")
                 if pd.isna(out_unit):
                     unit = unit.replace("/", "_")
                     out_unit = unit
                 
-                var = result_row["varname"]
+                var = result_row["Variable"]
                 unit_class = self.unitsdb["OLGA_vars"].get(var)
                 
                 if unit_class is None:
@@ -509,7 +529,7 @@ class tplParser:
 
     def calc_average(
         self,
-        input_matrix: pd.DataFrame,
+        input_matrix,
         start_index=None,
         end_index=None,
         n_rows=None,
@@ -702,7 +722,7 @@ class tplBatchParser:
         self.list_of_files = list_of_files
         self.files = [tplParser(file) for file in list_of_files]
 
-    def extract_trends(self, input_matrix: pd.DataFrame):
+    def extract_trends(self, input_matrix):
         """
         Function to extract trends from a batch of tpl files
         
@@ -729,7 +749,7 @@ class tplBatchParser:
 
     def calc_averages(
         self,
-        input_matrix: pd.DataFrame,
+        input_matrix,
         start_index=None,
         end_index=None,
         n_rows=None,

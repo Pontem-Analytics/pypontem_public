@@ -69,7 +69,15 @@ def search(df, var_name=None, **locator_types):
     filter_conditions = []
 
     if var_name:
-        filter_conditions.append(df["varname"].str.upper() == var_name.upper())
+        varname_df = df[df["Variable"].str.upper() == var_name.upper()]
+
+        # If there's only one match and its locator type is 'GLOBAL', return immediately
+        if len(varname_df) == 1 and 'GLOBAL' in varname_df.columns:
+            if varname_df["GLOBAL"].iloc[0]:
+                return varname_df.dropna(axis=1, how='all')
+            
+        filter_conditions.append(df["Variable"].str.upper() == var_name.upper())
+
     for col, value in locator_types.items():
         if col in df.columns and value and value != "None":
             if col == "GLOBAL":
@@ -348,14 +356,14 @@ class pplParser:
             match = pattern.match(line)
             if match:
                 data_entry = {
-                    "varname": match.group("varname"),
+                    "Variable": match.group("varname"),
                     "Locator Type":match.group("location"),
-                    "out_unit": match.group("unit"),
+                    "Units": match.group("unit").strip("()"),
                     "Description": match.group("description")
                 }
 
                 # Capture and process locator types
-                locator_type = match.group("locator_type")
+                locator_type = match.group("locator_type").capitalize()
                 if locator_type:
                     locname = match.group("locname")
                     data_entry[locator_type] = locname  # Create a column with locator type value
@@ -382,7 +390,7 @@ class pplParser:
         # Convert to DataFrame
         df = pd.DataFrame(data_list)
         df.columns = [col.replace(":", "") for col in df.columns]
-        final_columns = ["varname"] + [col for col in df.columns if col not in ["varname", "out_unit", "Description"]] + ["out_unit", "Description"]
+        final_columns = ["Variable"] + [col for col in df.columns if col not in ["Variable", "Units", "Description"]] + ["Units", "Description"]
         df = df[final_columns]
         return df
     
@@ -439,10 +447,10 @@ class pplParser:
         else:
             raise ValueError("TIME SERIES section not found")
         content = self._extract_catalog()
-        variable_Names = content["varname"].reset_index(drop=True)
+        variable_Names = content["Variable"].reset_index(drop=True)
         # branch_names = content["BRANCH"].reset_index(drop=True)
         # branch_names = [col for col in content.columns if col not in ["varname", "out_unit","Description","Locator Type"]]
-        excluded_columns = {"varname", "out_unit", "Description", "Locator Type"}
+        excluded_columns = {"Variable", "Units", "Description", "Locator Type"}
 
         # Identify the branch column dynamically
         branch_col = next(
@@ -456,7 +464,7 @@ class pplParser:
         else:
             raise ValueError("Branch column not found")
             
-        units = content["out_unit"].reset_index(drop=True)
+        units = content["Units"].reset_index(drop=True)
         lines = time_series_data.split('\n')
         time_dict = {}
 
@@ -510,7 +518,7 @@ class pplParser:
         df_final = pd.DataFrame(transposed_data, columns=columns)
         return df_final
 
-    def extract_profile(self, input_matrix: pd.DataFrame):
+    def extract_profile(self, input_matrix):
         """
         Extracts and processes profile data from an input matrix, performing unit conversions and time filtering.
         
@@ -522,13 +530,22 @@ class pplParser:
         """
 
         # Extract metadata and profile-related information
+
+        if type(input_matrix) == dict:
+            if all(not isinstance(v, (list, tuple, pd.Series)) for v in input_matrix.values()):
+                input_matrix = pd.DataFrame([input_matrix])
+            input_matrix = pd.DataFrame(input_matrix)
+        elif type(input_matrix) == pd.DataFrame:
+            input_matrix = input_matrix
+        else:
+            input_matrix = pd.read_csv(input_matrix)
+
         catalog = self._extract_catalog()
         profiles = self.branch_profiles
         metadata = self.metadata
         profile_unit = metadata["geometry"]
         profile_unit_cleaned = profile_unit.str.lower()
         time_series = self._extract_time_series_data()
-
         df_catalog = catalog.drop(columns=["Description"])
         df = pd.concat(profiles.values(), keys=profiles.keys()).reset_index(level=0).rename(columns={"level_0": "Category"})
         df.drop(columns=["Elevations_(m)"], inplace=True)
@@ -552,8 +569,8 @@ class pplParser:
             locators = {col: row[col] for col in input_matrix.columns if col not in ["varname", "out_unit", "out_unit_profile", "time_unit", "start_time", "end_time"]}
             locators = {key: value for key, value in locators.items() if pd.notna(value)}
 
-            if not locators:
-                raise ValueError(f"No locator specified for variable '{var_name}' in row {index + 1}")
+            # if not locators:
+            #     raise ValueError(f"No locator specified for variable '{var_name}' in row {index + 1}")
 
             # search_pattern = f'^{var_name}_'
             for key, value in locators.items():
@@ -561,7 +578,6 @@ class pplParser:
 
             # Filter time series data using the dynamically constructed regex
             data = time_series.filter(regex=search_pattern)
-            
             # Create a matching condition for the catalog based on the locators
             # match_condition = (df_catalog["varname"] == var_name)
 
@@ -580,7 +596,7 @@ class pplParser:
             match.reset_index(drop=True, inplace=True)
 
             if len(match) > 1:
-                additional_filters = [col for col in match.columns if col not in locators and col != "varname" and col !="Locator Type" and col != "out_unit" and col != "Description"]
+                additional_filters = [col for col in match.columns if col not in locators and col != "Variable" and col !="Locator Type" and col != "Units" and col != "Description"]
                 if additional_filters:
                     raise ValueError(
                         f"Multiple results found for variable '{var_name}'. "
@@ -623,10 +639,10 @@ class pplParser:
             
             # Process trend and time values
             final_df = data.dropna()
-            unit = match["out_unit"].str.extract(r"\((.*?)\)", expand=False).str.lower().to_string(index=False)
+            unit = match["Units"].str.lower().to_string(index=False)
             
             unit_class = self.unitsdb["OLGA_vars"].get(var_name)
-            
+            # print(unit_class)
             if unit_class is None:
                 for k, v in self.unitsdb["OLGA_startswith"].items():
                     if str(var_name).startswith(k):
@@ -678,11 +694,15 @@ class pplParser:
                     value = float(row[column_name])
                     if "-" in unit:
                         unit = unit.replace("-", "")
+
                     if pd.isna(out_unit):
-                        out_unit = unit_map[unit]
-                        
-                    if unit in unit_map:
-                        unit = unit_map[unit]
+                        if unit in unit_map:
+                            unit = unit_map[unit]
+                        out_unit = unit
+                    
+                    
+
+                    
                 
                     value_tagged = getattr(UnitConversion, unit_class)(value, unit)
                     converted_vals.append(round(value_tagged.convert(to_unit=out_unit), 3))
@@ -710,8 +730,8 @@ class pplParser:
 
     def extract_profiles_join_nodes(
             self,
-            input_matrix: pd.DataFrame,
-            branch_matrix: pd.DataFrame,
+            input_matrix,
+            branch_matrix,
     ):
         """ 
         Extracts and processes profile data for branches, combining boundary and section data. 
@@ -725,6 +745,12 @@ class pplParser:
         """
 
         data_df = self.extract_profile(input_matrix) 
+        if type(branch_matrix) == dict:
+            if len(branch_matrix) == 1:
+                branch_matrix = pd.DataFrame([branch_matrix], [0])
+            branch_matrix = pd.DataFrame(branch_matrix)
+
+        branch_matrix = pd.DataFrame(branch_matrix)
         catalog = self._extract_catalog()
         df_catalog = catalog.drop(columns=['Description'])
         branch_profiles = self.branch_profiles
@@ -769,7 +795,7 @@ class pplParser:
         num = num_of_pipes.values.flatten()
         df_boundary = []
         df_section = []
-        excluded_columns = {'varname', 'out_unit', 'Locator Type', 'Description'}
+        excluded_columns = {'Variable', 'Units', 'Locator Type', 'Description'}
 
 # Get all columns to be used as locators dynamically
         locator_columns = [col for col in df_catalog.columns if col not in excluded_columns]
@@ -777,17 +803,16 @@ class pplParser:
             branch_in = row['branch_in']
             branch_out = row['branch_out'] 
             variable_names = data_file['varname'].unique()
-
-
             for v in variable_names:
-
-                match = df_catalog[(df_catalog['varname'] == v) & (df_catalog[locator_columns] == branch_in) | (df_catalog['varname'] == v) & (df_catalog[locator_columns] == branch_out)]
+                match = df_catalog[
+                    ((df_catalog['Variable'] == v) & (df_catalog[locator_columns].eq(branch_in).all(axis=1))) |
+                    ((df_catalog['Variable'] == v) & (df_catalog[locator_columns].eq(branch_out).all(axis=1)))]
                 match.reset_index(drop=True, inplace=True)
-
                 if match.empty:
                     raise ValueError(f"No matching catalog entry found for branch_in '{branch_in}' or branch_out '{branch_out}' with variable '{v}'.")
 
                 location =  match['Locator Type'].values[0]
+    
                 
                 if location == "BOUNDARY:":
             
@@ -820,7 +845,8 @@ class pplParser:
                         pattern = r"in_(.*?):"
                         match = re.search(pattern, col)
                         variable = match.group(1) 
-                        m = re.match(rf'.*_(time_in_{variable}:_\d+\.\d+_\(.*?\))', col)
+                        m = re.search(rf"(time_in_{variable}:_\d+\.\d+_[^_]+(?:/[^_]+)?)", col)
+
                         if m:
                             return m.groups()[0]
                         return col  
@@ -830,8 +856,9 @@ class pplParser:
                     df_branch_out.columns = [rename_columns(col) for col in df_branch_out.columns]
                     df_boundary.append(df_branch_in)
                     df_boundary.append(df_branch_out)
+                    # print(df_boundary)
                     num_rows_to_process = [i+1 for i in num]
-                    # print(result_df)
+                    # print(len(num_rows_to_process))
                     combined_boundary_df = pd.concat(df_boundary)  
                     combined_boundary_df = combined_boundary_df.dropna()
                     prof = combined_boundary_df.filter(like="Profiles").copy()
@@ -839,7 +866,7 @@ class pplParser:
                     for i in range(0, len(num_rows_to_process), 2):
                         start_index = num_rows_to_process[i]
                         step_count = num_rows_to_process[i + 1]
-
+                        # print(step_count)
                         last_value = prof.iloc[start_index - 1] 
                         end_index = min(start_index + step_count, len(prof))
                         prof.iloc[start_index:end_index] += last_value 
@@ -880,7 +907,7 @@ class pplParser:
                         # Search for the pattern in the text
                         match = re.search(pattern, col)
                         variable = match.group(1)
-                        m = re.match(rf'.*_(time_in_{variable}:_\d+\.\d+_\(.*?\))', col)
+                        m = re.search(rf"(time_in_{variable}:_\d+\.\d+_[^_]+(?:/[^_]+)?)", col)
                         if m:
                             return m.groups()[0]
                         return col  
@@ -951,7 +978,7 @@ class pplBatchParser:
         self.list_of_files = list_of_files
         self.files = [pplParser(file) for file in list_of_files]
 
-    def extract_profiles(self, input_matrix: pd.DataFrame):
+    def extract_profiles(self, input_matrix):
         """
         Function to extract profiles from a batch of ppl files
         
@@ -975,7 +1002,7 @@ class pplBatchParser:
         )
         return final_df
 
-    def join_batch_nodes(self, input_matrix: pd.DataFrame, branch_matrix: pd.DataFrame):
+    def join_batch_nodes(self, input_matrix, branch_matrix):
         """
         Extracts and processes profiles data for branches, combining boundary and section data from a list of ppl files. 
         
@@ -1032,7 +1059,7 @@ if __name__ == "__main__":
         #args.filepath = [fp.replace("\\", "/") for fp in args.filepath]
 
         input_matrix = pd.read_csv(args.csv_file)
-        # branch_matrix = pd.read_csv(args.branch_csv_file)
+        branch_matrix = pd.read_csv(args.branch_csv_file)
         # pplbatchparser = pplBatchParser(args.filepath)
         # trends = pplbatchparser.extract_trends(input_matrix)
         # nodes = pplbatchparser.Join_batch_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
@@ -1040,13 +1067,13 @@ if __name__ == "__main__":
         # branch_matrix = pd.read_csv(args.branch_csv_file)
         pplparser = pplParser(args.filepath)
         # time_series = pplparser._extract_time_series_data()
-        # catalog = pplparser._extract_catalog()
-        # catalog = pplparser.search_catalog(var_name="PT")
+        # data = pplparser._extract_catalog()
+        # data = pplparser.search_catalog(var_name="PT")
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
-        trends = pplparser.extract_profile(input_matrix= input_matrix)
-        # nodes = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
-        print(trends)
+        # data = pplparser.extract_profile(input_matrix=args.csv_file)
+        data = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
+        print(data)
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)
     # results.print_stats(20)
