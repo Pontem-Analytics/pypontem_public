@@ -372,7 +372,7 @@ class tplParser:
                 for extra in extras:
                     extra = extra.strip("'")
                     if extra.endswith(":"):
-                        last_key = extra.strip(":")
+                        last_key = extra.strip(":").capitalize()
                         data_entry.setdefault(last_key, [])  # Initialize column as list
                     elif last_key:
                         data_entry[last_key].append(extra)
@@ -437,21 +437,21 @@ class tplParser:
             input_matrix = input_matrix
         else:
             input_matrix = pd.read_csv(input_matrix)
-
+        input_matrix.columns = input_matrix.columns.str.capitalize()
         self.time, self.trends, self.time_unit = self._extract_time_series_data()
         self.trends.reset_index(drop=True, inplace=True)
         df = pd.concat([self._extract_catalog(), self.trends], axis=1)
         result_dfs = []
         
         for _, row in input_matrix.iterrows():
-            var_name = row["varname"]
+            var_name = row["Variable"]
             if not isinstance(var_name, str):
                 raise ValueError(f"No variable name specified in row {_ + 1}")
             
-            out_unit = row.get("out_unit", None)
-            time_unit = row.get("time_unit", None)
+            out_unit = row.get("Units", None)
+            time_unit = row.get("Time_units", None)
             # Identify which locator type is specified
-            locators = {col: row[col] for col in input_matrix.columns if col not in ["varname", "out_unit", "time_unit"]}
+            locators = {col: row[col] for col in input_matrix.columns if col not in ["Variable", "Units", "Time_units"]}
             locators = {key: value for key, value in locators.items() if pd.notna(value)}  # Remove None values
             # if not locators:
             #     raise ValueError(f"No locator specified for variable '{var_name}' in row {_ + 1}")
@@ -460,7 +460,7 @@ class tplParser:
             if result_df.empty:
                 raise ValueError(f"No data found for variable '{var_name}' with locators {list(locators.keys())}")
             elif len(result_df) > 1:
-                additional_filters = [col for col in result_df.columns if col not in locators and col != "varname" and col != "out_unit" and col != "Description" and col != "variable_output"]
+                additional_filters = [col for col in result_df.columns if col not in locators and col != "Variable" and col != "Units" and col != "Description" and col != "variable_output"]
                 if additional_filters:
                     raise ValueError(
                         f"Multiple results found for variable '{var_name}'. "

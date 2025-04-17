@@ -90,13 +90,13 @@
                 <table class="table table-bordered table-hover" border="1">
                     <thead class="table-dark">
                         <tr>
-                            <th>varname</th>
-                            <th>BRANCH</th>
-                            <th>POSITION</th>
-                            <th>PIPE</th>
-                            <th>NR</th>
-                            <th>out_unit</th>
-                            <th>time_unit</th>
+                            <th>Variable</th>
+                            <th>Branch</th>
+                            <th>Position</th>
+                            <th>Pipe</th>
+                            <th>Nr</th>
+                            <th>Units</th>
+                            <th>Time_units</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -160,15 +160,15 @@
             <!-- Right Column: Description -->
             <div class="col-md-6" style="padding-top: 20px;">
                 <h3 class="text-center mb-4">Description</h3>
-                <p><strong>varname</strong>: Name of variable as specified in OLGA file</p>
-                <p><strong>BRANCH, POSITION</strong>: The location name associated with the variable. This can represent a branch, position, node, choke, controller, or global.
+                <p><strong>Variable</strong>: Name of variable as specified in OLGA file</p>
+                <p><strong>Branch, Position</strong>: The location name associated with the variable. This can represent a Branch, Position, Node, Choke, Controller, or Global.
                     Each location has its own column, use <b>None</b> where a corresponding value is not available <p>
-                <p><strong>PIPE, NR</strong>: Additional metadata from the file to help extract the exact variable intended. this could be the name of the pipe (PIPE), pipe number (NR) and wall layer (WALL LAYER).
+                <p><strong>Pipe, Nr</strong>: Additional metadata from the file to help extract the exact variable intended. this could be the name of the pipe (Pipe), pipe number (Nr) and wall layer (WALL LAYER).
                      Some variables may not need this, in which case it can be left blank</p>
                 <!-- <p><strong>row_number</strong>: The number of rows you want in the output for extract_trend</p> -->
-                <p><strong>out_unit</strong>: The output unit you desire. If you leave this blank, default units within the OLGA file will be used. <em>NOTE</em>: The list of compatible units, and the syntax is provided <a href="logbook.html">here</a>.
+                <p><strong>Units</strong>: The output unit you desire. If you leave this blank, default units within the OLGA file will be used. <em>NOTE</em>: The list of compatible units, and the syntax is provided <a href="logbook.html">here</a>.
                 <b>If you do not use the syntax provided, there will be errors.</b></p>
-                <p><strong>time_unit</strong>: The unit of time you desire the outputs in.</p>
+                <p><strong>Time_units</strong>: The unit of time you desire the outputs in.</p>
             </div>
         </div>
     </div>
@@ -184,15 +184,15 @@
                 <table class="table table-bordered table-hover" border="1">
                     <thead class="table-dark">
                         <tr>
-                            <th>varname</th>
-                            <th>BRANCH</th>
-                            <th>PIPE</th>
-                            <th>NR</th>
-                            <th>out_unit</th>
-                            <th>out_unit_profile</th>
-                            <th>time_unit</th>
-                            <th>start_time</th>
-                            <th>end_time</th>
+                            <th>Variable</th>
+                            <th>Branch</th>
+                            <th>Pipe</th>
+                            <th>Nr</th>
+                            <th>Units</th>
+                            <th>Profile_units</th>
+                            <th>Time_units</th>
+                            <th>Start_time</th>
+                            <th>End_time</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -268,17 +268,17 @@
             <!-- Right Column: Description -->
             <div class="col-md-4" style="padding-top: 20px;">
                 <h3 class="text-center mb-4">Description</h3>
-                <p><strong>varname</strong>: Name of variable as specified in OLGA file</p>
-                <p><strong>BRANCH, POSITION</strong>: The location name associated with the variable. This can represent a branch, position, node, choke, controller, or global.
+                <p><strong>Variable</strong>: Name of variable as specified in OLGA file</p>
+                <p><strong>Branch, Position</strong>: The location name associated with the variable. This can represent a Branch, Position, Node, Choke, Controller, or Global.
                     Each location has its own column, use <b>None</b> where a corresponding value is not available <p>
-                <p><strong>PIPE, NR</strong>: Additional metadata from the file to help extract the exact variable intended. this could be the name of the pipe (PIPE), pipe number (NR) and wall layer (WALL LAYER).
+                <p><strong>Pipe, Nr</strong>: Additional metadata from the file to help extract the exact variable intended. this could be the name of the pipe (Pipe), pipe number (Nr) and wall layer (Wall Layer).
                      Some variables may not need this, in which case it can be left blank</p>
-                <p><strong>out_unit</strong>: The output unit you desire. If you leave this blank, default units within the OLGA file will be used. NOTE: The list of compatible units, and the syntax is provided <a href="logbook.html">here</a>. 
+                <p><strong>Units</strong>: The output unit you desire. If you leave this blank, default units within the OLGA file will be used. NOTE: The list of compatible units, and the syntax is provided <a href="logbook.html">here</a>. 
                 <b>If you do not use the syntax provided, there will be errors.</b></p>
-                <p><strong>out_unit_profile</strong>: The unit of profiles you want your outputs in.</p>
-                <p><strong>time_unit</strong>: The unit of time you desire the outputs in.</p>
-                <p><strong>start_time</strong>: The starting time of the timestamp range you want to extract trends.</p>
-                <p><strong>end_time</strong>: the ending time of the timestamp range you want to extract trends.</p>
+                <p><strong>Profile_units</strong>: The unit of profiles you want your outputs in.</p>
+                <p><strong>Time_units</strong>: The unit of time you desire the outputs in.</p>
+                <p><strong>Start_time</strong>: The starting time of the timestamp range you want to extract trends.</p>
+                <p><strong>End_time</strong>: the ending time of the timestamp range you want to extract trends.</p>
             
             </div>
         </div>

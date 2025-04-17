@@ -374,7 +374,7 @@ class pplParser:
                 for extra in extras:
                     extra = extra.strip("'")
                     if extra.endswith(":"):
-                        last_key = extra.strip(":")
+                        last_key = extra.strip(":").capitalize()
                         data_entry.setdefault(last_key, [])  # Initialize column as list
                     elif last_key:
                         data_entry[last_key].append(extra)
@@ -539,7 +539,8 @@ class pplParser:
             input_matrix = input_matrix
         else:
             input_matrix = pd.read_csv(input_matrix)
-
+            
+        input_matrix.columns = input_matrix.columns.str.capitalize()
         catalog = self._extract_catalog()
         profiles = self.branch_profiles
         metadata = self.metadata
@@ -551,22 +552,22 @@ class pplParser:
         df.drop(columns=["Elevations_(m)"], inplace=True)
 
         input_matrix = input_matrix.dropna(how="all")
-        variable_names = input_matrix["varname"].to_list()
+        variable_names = input_matrix["Variable"].to_list()
         trend_df = []
 
         for index, row in input_matrix.iterrows():
-            var_name = row["varname"]
+            var_name = row["Variable"]
             if not isinstance(var_name, str):
                 raise ValueError(f"No variable name specified in row {index + 1}")
 
-            out_unit = row["out_unit"]
-            out_unit_profile = row["out_unit_profile"]
-            out_time_unit = row["time_unit"]
-            start_time = row["start_time"]
-            end_time = row["end_time"]
+            out_unit = row["Units"]
+            out_unit_profile = row["Profile_units"]
+            out_time_unit = row["Time_units"]
+            start_time = row["Start_time"]
+            end_time = row["End_time"]
 
             # Collecting all locators dynamically
-            locators = {col: row[col] for col in input_matrix.columns if col not in ["varname", "out_unit", "out_unit_profile", "time_unit", "start_time", "end_time"]}
+            locators = {col: row[col] for col in input_matrix.columns if col not in ["Variable", "Units", "Profile_units", "Time_units", "Start_time", "End_time"]}
             locators = {key: value for key, value in locators.items() if pd.notna(value)}
 
             # if not locators:
@@ -768,7 +769,7 @@ class pplParser:
         locators = {
         col: input_matrix[col].astype(str).str.strip().str.upper()
         for col in input_matrix.columns
-        if col not in ["varname", "out_unit", "out_unit_profile", "time_unit", "start_time", "end_time"]
+        if col not in ["Variable", "out_unit", "out_unit_profile", "time_unit", "start_time", "end_time"]
         }
         
         for key, value in locators.items():
@@ -802,7 +803,7 @@ class pplParser:
         for index, row in data.iterrows():
             branch_in = row['branch_in']
             branch_out = row['branch_out'] 
-            variable_names = data_file['varname'].unique()
+            variable_names = data_file['Variable'].unique()
             for v in variable_names:
                 match = df_catalog[
                     ((df_catalog['Variable'] == v) & (df_catalog[locator_columns].eq(branch_in).all(axis=1))) |
@@ -1059,7 +1060,7 @@ if __name__ == "__main__":
         #args.filepath = [fp.replace("\\", "/") for fp in args.filepath]
 
         input_matrix = pd.read_csv(args.csv_file)
-        branch_matrix = pd.read_csv(args.branch_csv_file)
+        # branch_matrix = pd.read_csv(args.branch_csv_file)
         # pplbatchparser = pplBatchParser(args.filepath)
         # trends = pplbatchparser.extract_trends(input_matrix)
         # nodes = pplbatchparser.Join_batch_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
@@ -1071,8 +1072,8 @@ if __name__ == "__main__":
         # data = pplparser.search_catalog(var_name="PT")
         # # trends = pplparser.extract_trend(var_name=args.varname)
         # profiles = pplparser._extract_branch_profiles(target_branch = args.varname)
-        # data = pplparser.extract_profile(input_matrix=args.csv_file)
-        data = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
+        data = pplparser.extract_profile(input_matrix=args.csv_file)
+        # data = pplparser.extract_profiles_join_nodes(input_matrix= input_matrix, branch_matrix=branch_matrix)
         print(data)
     # results = pstats.Stats(profile)
     # results.sort_stats(pstats.SortKey.TIME)

@@ -225,11 +225,11 @@
                   <dl class="py method">
                     <dt class="sig sig-object py" id="pypontem.ppl.pplparser.pplParser.extract_trend">
                       <p class="caption" role="heading"><span class="caption-text">extract_profile:</span></p>
-                      <span class="sig-name descname"><span class="pre">extract_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em><span class="sig-paren">)</span></dt>
+                      <span class="sig-name descname"><span class="pre">extract_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre"><span class="sig-paren">)</span></dt>
                     <dd><p>Extracts and processes profile data from an input matrix, performing unit conversions and time filtering.</p>
                     <dl class="simple">
                     <dt>Arguments:</dt><dd><ul class="simple">
-                    <li><p>input_matrix (pd.DataFrame): The matrix containing input data, including variable names, branches, units, and time specifications. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
+                    <li><p>input_matrix (pd.DataFrame, dictionary, csv): The matrix containing input data, including variable names, branches, units, and time specifications. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
                     </ul>
                     </dd>
                     <dt>Returns:</dt><dd><ul class="simple">
@@ -242,11 +242,11 @@
                     <dl class="py method">
                     <dt class="sig sig-object py" id="pypontem.ppl.pplparser.pplParser.extract_trends_join_nodes">
                       <p class="caption" role="heading"><span class="caption-text">extract_profiles_join_nodes:</span></p>
-                      <span class="sig-name descname"><span class="pre">extract_profiles_join_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame<i class="fas fa-file-csv    "></i></span></span></em><span class="sig-paren">)</dt>
+                      <span class="sig-name descname"><span class="pre">extract_profiles_join_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">, <em class="sig-param"><span class="n"><span class="pre">branch_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame<i class="fas fa-file-csv    "></i></span></span></em><span class="sig-paren">)</dt>
                     <dd><p>Extracts and processes profile data for branches, combining boundary and section data.</p>
                     <dl class="simple">
                     <dt>Arguments:</dt><dd><ul class="simple">
-                    <li><p>input_matrix (pd.DataFrame): The matrix containing trend data for various branches with columns [‘branchname’, ‘varname’, ‘out_unit’, ‘out_unit_profile’, ‘time_unit’]. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
+                    <li><p>input_matrix (pd.DataFrame, dictionary, csv): The matrix containing trend data for various branches with columns [ 'Variable', 'Units', 'Profile_units', ‘Time_unit’]. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
                     <li><p>branch_matrix (pd.DataFrame): The matrix containing information about branch connections with columns [‘branch_in’, ‘branch_out’].</p></li>
                     </ul>
                     </dd>
@@ -279,11 +279,11 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="pypontem.ppl.pplparser.pplBatchParser.extract_trends">
   <p class="caption" role="heading"><span class="caption-text">extract_profiles:</span></p>
-  <span class="sig-name descname"><span class="pre">extract_profiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em><span class="sig-paren">)</span></dt>
+  <span class="sig-name descname"><span class="pre">extract_profiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre"><span class="sig-paren">)</span></dt>
 <dd><p>Function to extract profiles from a batch of ppl files</p>
 <dl class="simple">
 <dt>Arguments:</dt><dd><ul class="simple">
-<li><p>Input_matrix (pd.DataFrame): The matrix containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument.</p></li>
+<li><p>Input_matrix (pd.DataFrame, dictionary, csv): The matrix containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument.</p></li>
 </ul>
 </dd>
 <dt>Returns</dt><dd><ul class="simple">
@@ -296,11 +296,11 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="pypontem.ppl.pplparser.pplBatchParser.join_batch_nodes">
   <p class="caption" role="heading"><span class="caption-text">join_batch_nodes:</span></p>
-  <span class="sig-name descname"><span class="pre">join_batch_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em><span class="sig-paren">)</span></dt>
+  <span class="sig-name descname"><span class="pre">join_batch_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">, <em class="sig-param"><span class="n"><span class="pre">branch_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Extracts and processes profile data for branches, combining boundary and section data from a list of ppl files.</p>
 <dl class="simple">
 <dt>Arguments:</dt><dd><ul class="simple">
-<li><p>input_matrix (pd.DataFrame): The matrix containing trend data for various branches with columns [‘branchname’, ‘varname’, ‘out_unit’, ‘out_unit_profile’, ‘time_unit’]. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is arequired argument</p></li>
+<li><p>input_matrix (pd.DataFrame, dictionary, csv): The matrix containing trend data for various branches with columns [ 'Variable', 'Units', 'Profile_units', ‘Time_unit’]. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is arequired argument</p></li>
 <li><p>branch_matrix (pd.DataFrame): The matrix containing information about branch connections with columns [‘branch_in’, ‘branch_out’].</p></li>
 </ul>
 </dd>

@@ -229,11 +229,11 @@
           <dl class="py method">
             <dt class="sig sig-object py" id="pypontem.tpl.tplparser.tplParser.extract_trend">
               <p class="caption" role="heading"><span class="caption-text">extract_trend:</span></p>
-              <span class="sig-name descname"><span class="pre">extract_trend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em><span class="sig-paren">)</span></dt>
+              <span class="sig-name descname"><span class="pre">extract_trend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre"></em><span class="sig-paren">)</span></dt>
             <dd><p>Search for variables in the DataFrame based on variable names, branches, and pipe names, and display their information.</p>
             <dl class="simple">
             <dt>Arguments:</dt><dd><ul class="simple">
-            <li><p>input_matrix (pd.DataFrame):A  DataFrame containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
+            <li><p>input_matrix (pd.DataFrame, dictionary, csv):A  DataFrame containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
             </ul>
             </dd>
             <dt>Returns:</dt><dd><ul class="simple">
@@ -246,11 +246,11 @@
             <dl class="py method">
               <dt class="sig sig-object py" id="pypontem.tpl.tplparser.tplParser.calc_average">
                 <p class="caption" role="heading"><span class="caption-text">calc_average:</span></p>
-                <span class="sig-name descname"><span class="pre">calc_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_timeunits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+                <span class="sig-name descname"><span class="pre">calc_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre"></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_timeunits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
               <dd><p>Calculate the average of values in the DataFrame between the specified start and end indices.</p>
               <dl class="simple">
               <dt>Arguments:</dt><dd><ul class="simple">
-              <li><p>input_matrix (pd.DataFrame): The dataframe file containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
+              <li><p>input_matrix (pd.DataFrame, dictionary, csv): The dataframe file containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
               <li><p>start_index (int, optional): The starting index from which the average will be calculated. Defaults to None.</p></li>
               <li><p>end_index (int, optional): The ending index up to which the average will be calculated. Defaults to None.</p></li>
               <li><p>n_rows (int, optional): Number of rows to consider for calculating the average. If provided, start_index and end_index are ignored. Defaults to None.</p></li>
@@ -311,11 +311,11 @@ keyword (str): The keyword to search for.</p>
 <dl class="py method">
   <dt class="sig sig-object py" id="pypontem.tpl.tplparser.tplBatchParser.extract_trends">
     <p class="caption" role="heading"><span class="caption-text">extract_trends:</span></p>
-    <span class="sig-name descname"><span class="pre">extract_trends</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em><span class="sig-paren">)</span></dt>
+    <span class="sig-name descname"><span class="pre">extract_trends</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre"><span class="sig-paren">)</span></dt>
   <dd><p>Function to extract trends from a batch of tpl files</p>
   <dl class="simple">
   <dt>Arguments:</dt><dd><ul class="simple">
-  <li><p>Input_matrix (pd.DataFrame): The matrix containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
+  <li><p>Input_matrix (pd.DataFrame, dictionary, csv): The matrix containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
   </ul>
   </dd>
   <dt>Returns</dt><dd><ul class="simple">
@@ -328,11 +328,11 @@ keyword (str): The keyword to search for.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pypontem.tpl.tplparser.tplBatchParser.calc_averages">
   <p class="caption" role="heading"><span class="caption-text">calc_averages:</span></p>
-  <span class="sig-name descname"><span class="pre">calc_averages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_timeunits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+  <span class="sig-name descname"><span class="pre">calc_averages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_matrix</span></span><span class="p"><span class="pre"></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_timeunits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Calculate the average of values in the DataFrame up to the specified index or of the last n values.</p>
 <dl class="simple">
 <dt>Arguments:</dt><dd><ul class="simple">
-<li><p>input_matrix (pd.DataFrame): The dataframe containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
+<li><p>input_matrix (pd.DataFrame, dictionary, csv): The dataframe containing variable names, branch names, and pipe names. Click to view the <a a href="inputFiles.html">Input matrix template</a>. This is a required argument</p></li>
 <li><p>start_index (int, optional): The starting index from which the average will be calculated. Defaults to None.</p></li>
 <li><p>end_index (int, optional): The ending index up to which the average will be calculated. Defaults to None.</p></li>
 <li><p>n_rows (int, optional): Number of rows to consider for calculating the average. If provided, start_index and end_index are ignored. Defaults to None.</p></li>
